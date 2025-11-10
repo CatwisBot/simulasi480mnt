@@ -1,1 +1,0 @@
-# simulasi480mnt
