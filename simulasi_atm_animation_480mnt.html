@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discrete Event Simulation - ATM Queue (25 Pelanggan)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .info-box h3 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 1.3em;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            background: white;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 3px solid #764ba2;
+        }
+        
+        .info-item strong {
+            color: #667eea;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 14px 35px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-start {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .btn-start:hover {
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-pause {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+        
+        .btn-pause:hover {
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-reset {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .speed-control label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .speed-control select {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 2px solid #667eea;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.95em;
+            opacity: 0.95;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card small {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+        
+        .simulation-area {
+            background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            padding: 35px;
+            margin-bottom: 30px;
+            min-height: 450px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .atm-section {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            margin-bottom: 35px;
+        }
+        
+        .atm-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .atm-machine {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            width: 180px;
+            height: 260px;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            padding: 20px;
+            border: 3px solid #1a252f;
+        }
+        
+        .atm-screen {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            width: 100%;
+            height: 70px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            padding: 8px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+            border: 2px solid #2574a9;
+        }
+        
+        .atm-status {
+            background: #95a5a6;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .atm-status.busy {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            animation: pulse-status 1.5s infinite;
+        }
+        
+        .atm-status.idle {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        @keyframes pulse-status {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .atm-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 5px;
+        }
+        
+        .key {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            height: 25px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .atm-label {
+            text-align: center;
+            margin-top: 12px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        .queue-area {
+            flex: 1;
+        }
+        
+        .queue-label {
+            font-weight: bold;
+            margin-bottom: 18px;
+            color: #2c3e50;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .queue-line {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+            min-height: 70px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .customer {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+            transition: all 0.5s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .customer::after {
+            content: attr(data-info);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .customer:hover::after {
+            opacity: 1;
+        }
+        
+        .customer.waiting {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            animation: pulse 2s infinite;
+        }
+        
+        .customer.serving {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            animation: glow 1.5s infinite;
+            transform: scale(1.15);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(243, 156, 18, 0.6);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(243, 156, 18, 1),
+                            0 0 45px rgba(243, 156, 18, 0.8);
+            }
+        }
+        
+        .timeline {
+            margin-top: 25px;
+        }
+        
+        .timeline-label {
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+        
+        .timeline-bar {
+            background: #ecf0f1;
+            height: 50px;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .timeline-progress {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+        
+        .event-log {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #ecf0f1;
+            padding: 25px;
+            border-radius: 12px;
+            max-height: 450px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .event-log::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .event-log::-webkit-scrollbar-track {
+            background: #1a252f;
+            border-radius: 5px;
+        }
+        
+        .event-log::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 5px;
+        }
+        
+        .event-log-title {
+            font-weight: bold;
+            margin-bottom: 18px;
+            color: #3498db;
+            font-size: 1.3em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .event {
+            padding: 8px 0;
+            border-bottom: 1px solid #34495e;
+            line-height: 1.6;
+        }
+        
+        .event:last-child {
+            border-bottom: none;
+        }
+        
+        .event-time {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        
+        .event-customer {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .event-action {
+            color: #2ecc71;
+        }
+        
+        .event-arrival {
+            color: #3498db;
+        }
+        
+        .event-departure {
+            color: #e74c3c;
+        }
+        
+        .current-event {
+            background: rgba(52, 152, 219, 0.2);
+            padding: 8px;
+            margin: -8px 0;
+            border-radius: 5px;
+        }
+        
+        /* ========================================
+           RESPONSIVE MOBILE DESIGN
+           ======================================== */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+                border-radius: 10px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 5px;
+            }
+            
+            .subtitle {
+                font-size: 0.85em;
+                margin-bottom: 15px;
+            }
+            
+            .info-box {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .info-box h3 {
+                font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .info-item {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            
+            .controls {
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .speed-control {
+                width: 100%;
+            }
+            
+            .speed-control label {
+                font-size: 14px;
+            }
+            
+            .speed-control select {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-card h3 {
+                font-size: 0.85em;
+                margin-bottom: 8px;
+            }
+            
+            .stat-card .value {
+                font-size: 1.5em;
+            }
+            
+            .stat-card small {
+                font-size: 0.75em;
+            }
+            
+            .simulation-area {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .atm-section {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .atm-container {
+                margin: 0 auto;
+            }
+            
+            .atm-machine {
+                width: 180px;
+                height: 250px;
+            }
+            
+            .atm-screen {
+                height: 80px;
+                font-size: 12px;
+            }
+            
+            .atm-status {
+                font-size: 11px;
+                padding: 6px;
+            }
+            
+            .atm-keypad {
+                padding: 4px;
+                gap: 4px;
+            }
+            
+            .key {
+                height: 20px;
+            }
+            
+            .atm-label {
+                font-size: 1em;
+                margin-top: 10px;
+            }
+            
+            .queue-label {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+            
+            .queue-line {
+                padding: 15px;
+                gap: 12px;
+                min-height: 60px;
+            }
+            
+            .customer {
+                width: 50px;
+                height: 50px;
+                font-size: 14px;
+            }
+            
+            .customer::after {
+                font-size: 10px;
+                bottom: -25px;
+            }
+            
+            .timeline {
+                margin-bottom: 20px;
+            }
+            
+            .timeline h3 {
+                font-size: 1em;
+                margin-bottom: 8px;
+            }
+            
+            .timeline-bar {
+                height: 25px;
+            }
+            
+            .timeline-progress {
+                font-size: 11px;
+                line-height: 25px;
+            }
+            
+            .event-log {
+                margin-top: 20px;
+            }
+            
+            .event-log h3 {
+                font-size: 1em;
+                margin-bottom: 10px;
+            }
+            
+            .log-container {
+                max-height: 250px;
+                font-size: 0.85em;
+            }
+            
+            .event {
+                padding: 8px;
+            }
+        }
+        
+        /* Extra small devices (phones in portrait) */
+        @media screen and (max-width: 480px) {
+            h1 {
+                font-size: 1.2em;
+            }
+            
+            .subtitle {
+                font-size: 0.75em;
+            }
+            
+            .info-box h3 {
+                font-size: 1em;
+            }
+            
+            .info-item {
+                font-size: 0.85em;
+                padding: 8px;
+            }
+            
+            button {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card h3 {
+                font-size: 0.8em;
+            }
+            
+            .stat-card .value {
+                font-size: 1.3em;
+            }
+            
+            .atm-machine {
+                width: 150px;
+                height: 220px;
+            }
+            
+            .atm-screen {
+                height: 70px;
+                font-size: 11px;
+            }
+            
+            .customer {
+                width: 45px;
+                height: 45px;
+                font-size: 12px;
+            }
+            
+            .queue-line {
+                padding: 10px;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏧 Discrete Event Simulation - Sistem Antrian ATM</h1>
+        <p class="subtitle">Mode: WAKTU | Single Server | Jam 08:00 - 16:00 (480 menit)</p>
+        
+        <div class="info-box">
+            <h3>📋 Parameter & Kriteria Simulasi</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Mode Simulasi:</strong> WAKTU
+                </div>
+                <div class="info-item">
+                    <strong>Waktu Maksimal:</strong> 480 menit
+                </div>
+                <div class="info-item">
+                    <strong>Waktu Antar Kedatangan:</strong> 3.0 menit (Eksponensial)
+                </div>
+                <div class="info-item">
+                    <strong>Waktu Pelayanan:</strong> 2.4 menit (Eksponensial)
+                </div>
+                <div class="info-item">
+                    <strong>Jam Operasional:</strong> 08:00 - 16:00 (480 menit)
+                </div>
+                <div class="info-item">
+                    <strong>Kapasitas ATM:</strong> 1 (Single Server)
+                </div>
+                <div class="info-item">
+                    <strong>Disiplin Antrian:</strong> FIFO (First In First Out)
+                </div>
+                <div class="info-item">
+                    <strong>Expected Waiting Time:</strong> 10.486 menit
+                </div>
+                <div class="info-item">
+                    <strong>Avg Queue Length:</strong> 3.835 pelanggan
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-start" onclick="startSimulation()">▶️ Mulai Simulasi</button>
+            <button class="btn-pause" onclick="pauseSimulation()">⏸️ Pause</button>
+            <button class="btn-reset" onclick="resetSimulation()">🔄 Reset</button>
+            <div class="speed-control">
+                <label>⚡ Kecepatan:</label>
+                <select id="speed" onchange="updateSpeed()">
+                    <option value="2000">🐌 Lambat</option>
+                    <option value="1000" selected>🚶 Normal</option>
+                    <option value="500">🏃 Cepat</option>
+                    <option value="200">🚀 Sangat Cepat</option>
+                    <option value="50">⚡ Kilat</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>⏰ Waktu Simulasi</h3>
+                <div class="value" id="currentTime">0.00</div>
+                <small>menit</small>
+            </div>
+            <div class="stat-card">
+                <h3>👥 Total Kedatangan</h3>
+                <div class="value" id="totalArrivals">0</div>
+                <small>pelanggan</small>
+            </div>
+            <div class="stat-card">
+                <h3>✅ Pelanggan Dilayani</h3>
+                <div class="value" id="servedCount">0</div>
+                <small id="servedLabel">total</small>
+            </div>
+            <div class="stat-card">
+                <h3>📊 Panjang Antrian</h3>
+                <div class="value" id="queueLength">0</div>
+                <small>pelanggan</small>
+            </div>
+            <div class="stat-card">
+                <h3>⏱️ Avg Wait Time</h3>
+                <div class="value" id="avgWait">0.000</div>
+                <small>menit</small>
+            </div>
+            <div class="stat-card">
+                <h3>📈 Avg Queue Length</h3>
+                <div class="value" id="avgQueueLen">0.000</div>
+                <small>pelanggan</small>
+            </div>
+        </div>
+        
+        <div class="simulation-area">
+            <div class="atm-section">
+                <div class="atm-container">
+                    <div class="atm-machine">
+                        <div class="atm-screen" id="atmScreen">ATM READY</div>
+                        <div class="atm-status idle" id="atmStatus">IDLE</div>
+                        <div class="atm-keypad">
+                            <div class="key"></div>
+                            <div class="key"></div>
+                            <div class="key"></div>
+                            <div class="key"></div>
+                            <div class="key"></div>
+                            <div class="key"></div>
+                            <div class="key"></div>
+                            <div class="key"></div>
+                            <div class="key"></div>
+                        </div>
+                    </div>
+                    <div class="atm-label">ATM Machine</div>
+                </div>
+                
+                <div class="queue-area">
+                    <div class="queue-label">
+                        <span>📋</span>
+                        <span>Antrian Pelanggan (FIFO)</span>
+                    </div>
+                    <div class="queue-line" id="queueLine">
+                        <div style="color: #999; font-style: italic; padding: 20px;">Antrian kosong - Tekan "Mulai Simulasi"</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-label">⏱️ Progress Simulasi (0 - 480 menit):</div>
+                <div class="timeline-bar">
+                    <div class="timeline-progress" id="timelineProgress" style="width: 0%">0.0%</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="event-log">
+            <div class="event-log-title">📜 Event Log - Discrete Event Simulation</div>
+            <div id="eventLog"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Data simulasi dari Python
+        const simulationSteps = [{"Step": 1, "Event Type": "ARRIVAL", "Time (ti)": 1.408, "Customer ID": 0, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.408, "Time-Weighted Queue": 0.0}, {"Step": 2, "Event Type": "ARRIVAL", "Time (ti)": 5.358, "Customer ID": 1, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 0, "Time Delta (ti - ti-1)": 3.95, "Time-Weighted Queue": 0.0}, {"Step": 3, "Event Type": "ARRIVAL", "Time (ti)": 8.097, "Customer ID": 2, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 0, "Time Delta (ti - ti-1)": 2.739, "Time-Weighted Queue": 2.739}, {"Step": 4, "Event Type": "ARRIVAL", "Time (ti)": 8.606, "Customer ID": 3, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 0, "Time Delta (ti - ti-1)": 0.509, "Time-Weighted Queue": 1.018}, {"Step": 5, "Event Type": "DEPARTURE", "Time (ti)": 8.632, "Customer ID": 0, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 0, "Time Delta (ti - ti-1)": 0.026, "Time-Weighted Queue": 0.079}, {"Step": 6, "Event Type": "DEPARTURE", "Time (ti)": 8.776, "Customer ID": 1, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 1, "Time Delta (ti - ti-1)": 0.144, "Time-Weighted Queue": 0.287}, {"Step": 7, "Event Type": "ARRIVAL", "Time (ti)": 9.115, "Customer ID": 4, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 2, "Time Delta (ti - ti-1)": 0.339, "Time-Weighted Queue": 0.339}, {"Step": 8, "Event Type": "ARRIVAL", "Time (ti)": 11.872, "Customer ID": 5, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 2, "Time Delta (ti - ti-1)": 2.757, "Time-Weighted Queue": 5.514}, {"Step": 9, "Event Type": "DEPARTURE", "Time (ti)": 13.603, "Customer ID": 2, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 2, "Time Delta (ti - ti-1)": 1.731, "Time-Weighted Queue": 5.193}, {"Step": 10, "Event Type": "DEPARTURE", "Time (ti)": 13.653, "Customer ID": 3, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 3, "Time Delta (ti - ti-1)": 0.05, "Time-Weighted Queue": 0.1}, {"Step": 11, "Event Type": "ARRIVAL", "Time (ti)": 15.566, "Customer ID": 6, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 4, "Time Delta (ti - ti-1)": 1.913, "Time-Weighted Queue": 1.913}, {"Step": 12, "Event Type": "ARRIVAL", "Time (ti)": 20.925, "Customer ID": 7, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 4, "Time Delta (ti - ti-1)": 5.359, "Time-Weighted Queue": 10.719}, {"Step": 13, "Event Type": "ARRIVAL", "Time (ti)": 21.641, "Customer ID": 8, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 4, "Time Delta (ti - ti-1)": 0.716, "Time-Weighted Queue": 2.148}, {"Step": 14, "Event Type": "DEPARTURE", "Time (ti)": 22.061, "Customer ID": 4, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 4, "Time Delta (ti - ti-1)": 0.42, "Time-Weighted Queue": 1.681}, {"Step": 15, "Event Type": "ARRIVAL", "Time (ti)": 22.243, "Customer ID": 9, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 5, "Time Delta (ti - ti-1)": 0.182, "Time-Weighted Queue": 0.545}, {"Step": 16, "Event Type": "DEPARTURE", "Time (ti)": 22.547, "Customer ID": 5, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 5, "Time Delta (ti - ti-1)": 0.304, "Time-Weighted Queue": 1.218}, {"Step": 17, "Event Type": "ARRIVAL", "Time (ti)": 23.331, "Customer ID": 10, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 6, "Time Delta (ti - ti-1)": 0.784, "Time-Weighted Queue": 2.351}, {"Step": 18, "Event Type": "DEPARTURE", "Time (ti)": 24.333, "Customer ID": 6, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 6, "Time Delta (ti - ti-1)": 1.002, "Time-Weighted Queue": 4.007}, {"Step": 19, "Event Type": "ARRIVAL", "Time (ti)": 25.028, "Customer ID": 11, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 7, "Time Delta (ti - ti-1)": 0.695, "Time-Weighted Queue": 2.085}, {"Step": 20, "Event Type": "DEPARTURE", "Time (ti)": 25.159, "Customer ID": 7, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 7, "Time Delta (ti - ti-1)": 0.131, "Time-Weighted Queue": 0.525}, {"Step": 21, "Event Type": "DEPARTURE", "Time (ti)": 25.52, "Customer ID": 8, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 8, "Time Delta (ti - ti-1)": 0.361, "Time-Weighted Queue": 1.082}, {"Step": 22, "Event Type": "DEPARTURE", "Time (ti)": 26.349, "Customer ID": 9, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 9, "Time Delta (ti - ti-1)": 0.829, "Time-Weighted Queue": 1.658}, {"Step": 23, "Event Type": "DEPARTURE", "Time (ti)": 27.444, "Customer ID": 10, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 10, "Time Delta (ti - ti-1)": 1.095, "Time-Weighted Queue": 1.095}, {"Step": 24, "Event Type": "ARRIVAL", "Time (ti)": 27.867, "Customer ID": 12, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 11, "Time Delta (ti - ti-1)": 0.423, "Time-Weighted Queue": 0.0}, {"Step": 25, "Event Type": "DEPARTURE", "Time (ti)": 28.905, "Customer ID": 11, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 11, "Time Delta (ti - ti-1)": 1.038, "Time-Weighted Queue": 1.038}, {"Step": 26, "Event Type": "DEPARTURE", "Time (ti)": 29.44, "Customer ID": 12, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 12, "Time Delta (ti - ti-1)": 0.535, "Time-Weighted Queue": 0.0}, {"Step": 27, "Event Type": "ARRIVAL", "Time (ti)": 32.481, "Customer ID": 13, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 3.041, "Time-Weighted Queue": 0.0}, {"Step": 28, "Event Type": "DEPARTURE", "Time (ti)": 34.214, "Customer ID": 13, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 13, "Time Delta (ti - ti-1)": 1.733, "Time-Weighted Queue": 0.0}, {"Step": 29, "Event Type": "ARRIVAL", "Time (ti)": 35.173, "Customer ID": 14, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 0.96, "Time-Weighted Queue": 0.0}, {"Step": 30, "Event Type": "DEPARTURE", "Time (ti)": 35.287, "Customer ID": 14, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 14, "Time Delta (ti - ti-1)": 0.114, "Time-Weighted Queue": 0.0}, {"Step": 31, "Event Type": "ARRIVAL", "Time (ti)": 37.979, "Customer ID": 15, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 2.692, "Time-Weighted Queue": 0.0}, {"Step": 32, "Event Type": "ARRIVAL", "Time (ti)": 38.181, "Customer ID": 16, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 15, "Time Delta (ti - ti-1)": 0.202, "Time-Weighted Queue": 0.0}, {"Step": 33, "Event Type": "DEPARTURE", "Time (ti)": 38.428, "Customer ID": 15, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 15, "Time Delta (ti - ti-1)": 0.247, "Time-Weighted Queue": 0.247}, {"Step": 34, "Event Type": "DEPARTURE", "Time (ti)": 46.517, "Customer ID": 16, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 16, "Time Delta (ti - ti-1)": 8.09, "Time-Weighted Queue": 0.0}, {"Step": 35, "Event Type": "ARRIVAL", "Time (ti)": 47.102, "Customer ID": 17, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 0.585, "Time-Weighted Queue": 0.0}, {"Step": 36, "Event Type": "ARRIVAL", "Time (ti)": 48.192, "Customer ID": 18, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 17, "Time Delta (ti - ti-1)": 1.09, "Time-Weighted Queue": 0.0}, {"Step": 37, "Event Type": "ARRIVAL", "Time (ti)": 48.5, "Customer ID": 19, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 17, "Time Delta (ti - ti-1)": 0.308, "Time-Weighted Queue": 0.308}, {"Step": 38, "Event Type": "DEPARTURE", "Time (ti)": 51.068, "Customer ID": 17, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 17, "Time Delta (ti - ti-1)": 2.567, "Time-Weighted Queue": 5.135}, {"Step": 39, "Event Type": "ARRIVAL", "Time (ti)": 51.959, "Customer ID": 20, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 18, "Time Delta (ti - ti-1)": 0.891, "Time-Weighted Queue": 0.891}, {"Step": 40, "Event Type": "ARRIVAL", "Time (ti)": 52.349, "Customer ID": 21, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 18, "Time Delta (ti - ti-1)": 0.39, "Time-Weighted Queue": 0.781}, {"Step": 41, "Event Type": "DEPARTURE", "Time (ti)": 52.46, "Customer ID": 18, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 18, "Time Delta (ti - ti-1)": 0.111, "Time-Weighted Queue": 0.333}, {"Step": 42, "Event Type": "DEPARTURE", "Time (ti)": 52.544, "Customer ID": 19, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 19, "Time Delta (ti - ti-1)": 0.084, "Time-Weighted Queue": 0.168}, {"Step": 43, "Event Type": "ARRIVAL", "Time (ti)": 54.4, "Customer ID": 22, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 20, "Time Delta (ti - ti-1)": 1.856, "Time-Weighted Queue": 1.856}, {"Step": 44, "Event Type": "ARRIVAL", "Time (ti)": 55.298, "Customer ID": 23, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 20, "Time Delta (ti - ti-1)": 0.898, "Time-Weighted Queue": 1.797}, {"Step": 45, "Event Type": "DEPARTURE", "Time (ti)": 58.305, "Customer ID": 20, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 20, "Time Delta (ti - ti-1)": 3.007, "Time-Weighted Queue": 9.021}, {"Step": 46, "Event Type": "ARRIVAL", "Time (ti)": 58.557, "Customer ID": 24, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 21, "Time Delta (ti - ti-1)": 0.252, "Time-Weighted Queue": 0.504}, {"Step": 47, "Event Type": "DEPARTURE", "Time (ti)": 59.201, "Customer ID": 21, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 21, "Time Delta (ti - ti-1)": 0.645, "Time-Weighted Queue": 1.934}, {"Step": 48, "Event Type": "ARRIVAL", "Time (ti)": 60.759, "Customer ID": 25, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 22, "Time Delta (ti - ti-1)": 1.558, "Time-Weighted Queue": 3.115}, {"Step": 49, "Event Type": "DEPARTURE", "Time (ti)": 61.1, "Customer ID": 22, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 22, "Time Delta (ti - ti-1)": 0.341, "Time-Weighted Queue": 1.024}, {"Step": 50, "Event Type": "ARRIVAL", "Time (ti)": 61.372, "Customer ID": 26, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 23, "Time Delta (ti - ti-1)": 0.272, "Time-Weighted Queue": 0.544}, {"Step": 51, "Event Type": "ARRIVAL", "Time (ti)": 65.849, "Customer ID": 27, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 23, "Time Delta (ti - ti-1)": 4.477, "Time-Weighted Queue": 13.43}, {"Step": 52, "Event Type": "DEPARTURE", "Time (ti)": 69.483, "Customer ID": 23, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 23, "Time Delta (ti - ti-1)": 3.634, "Time-Weighted Queue": 14.536}, {"Step": 53, "Event Type": "ARRIVAL", "Time (ti)": 74.264, "Customer ID": 28, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 24, "Time Delta (ti - ti-1)": 4.781, "Time-Weighted Queue": 14.344}, {"Step": 54, "Event Type": "DEPARTURE", "Time (ti)": 74.888, "Customer ID": 24, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 24, "Time Delta (ti - ti-1)": 0.624, "Time-Weighted Queue": 2.496}, {"Step": 55, "Event Type": "ARRIVAL", "Time (ti)": 76.997, "Customer ID": 29, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 25, "Time Delta (ti - ti-1)": 2.109, "Time-Weighted Queue": 6.328}, {"Step": 56, "Event Type": "ARRIVAL", "Time (ti)": 77.275, "Customer ID": 30, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 25, "Time Delta (ti - ti-1)": 0.278, "Time-Weighted Queue": 1.112}, {"Step": 57, "Event Type": "ARRIVAL", "Time (ti)": 77.93, "Customer ID": 31, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 25, "Time Delta (ti - ti-1)": 0.654, "Time-Weighted Queue": 3.272}, {"Step": 58, "Event Type": "ARRIVAL", "Time (ti)": 78.069, "Customer ID": 32, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 25, "Time Delta (ti - ti-1)": 0.139, "Time-Weighted Queue": 0.833}, {"Step": 59, "Event Type": "ARRIVAL", "Time (ti)": 79.249, "Customer ID": 33, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 25, "Time Delta (ti - ti-1)": 1.181, "Time-Weighted Queue": 8.264}, {"Step": 60, "Event Type": "ARRIVAL", "Time (ti)": 80.726, "Customer ID": 34, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 25, "Time Delta (ti - ti-1)": 1.476, "Time-Weighted Queue": 11.811}, {"Step": 61, "Event Type": "DEPARTURE", "Time (ti)": 81.007, "Customer ID": 25, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 25, "Time Delta (ti - ti-1)": 0.281, "Time-Weighted Queue": 2.531}, {"Step": 62, "Event Type": "ARRIVAL", "Time (ti)": 81.675, "Customer ID": 35, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 26, "Time Delta (ti - ti-1)": 0.668, "Time-Weighted Queue": 5.348}, {"Step": 63, "Event Type": "ARRIVAL", "Time (ti)": 82.999, "Customer ID": 36, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 26, "Time Delta (ti - ti-1)": 1.324, "Time-Weighted Queue": 11.913}, {"Step": 64, "Event Type": "ARRIVAL", "Time (ti)": 83.988, "Customer ID": 37, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 26, "Time Delta (ti - ti-1)": 0.989, "Time-Weighted Queue": 9.894}, {"Step": 65, "Event Type": "DEPARTURE", "Time (ti)": 85.242, "Customer ID": 26, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 26, "Time Delta (ti - ti-1)": 1.253, "Time-Weighted Queue": 13.787}, {"Step": 66, "Event Type": "DEPARTURE", "Time (ti)": 85.606, "Customer ID": 27, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 27, "Time Delta (ti - ti-1)": 0.365, "Time-Weighted Queue": 3.646}, {"Step": 67, "Event Type": "ARRIVAL", "Time (ti)": 86.336, "Customer ID": 38, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 28, "Time Delta (ti - ti-1)": 0.729, "Time-Weighted Queue": 6.563}, {"Step": 68, "Event Type": "ARRIVAL", "Time (ti)": 86.568, "Customer ID": 39, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 28, "Time Delta (ti - ti-1)": 0.232, "Time-Weighted Queue": 2.324}, {"Step": 69, "Event Type": "DEPARTURE", "Time (ti)": 89.496, "Customer ID": 28, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 28, "Time Delta (ti - ti-1)": 2.927, "Time-Weighted Queue": 32.202}, {"Step": 70, "Event Type": "DEPARTURE", "Time (ti)": 93.046, "Customer ID": 29, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 29, "Time Delta (ti - ti-1)": 3.551, "Time-Weighted Queue": 35.508}, {"Step": 71, "Event Type": "DEPARTURE", "Time (ti)": 93.578, "Customer ID": 30, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 30, "Time Delta (ti - ti-1)": 0.532, "Time-Weighted Queue": 4.785}, {"Step": 72, "Event Type": "DEPARTURE", "Time (ti)": 93.591, "Customer ID": 31, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 31, "Time Delta (ti - ti-1)": 0.013, "Time-Weighted Queue": 0.106}, {"Step": 73, "Event Type": "DEPARTURE", "Time (ti)": 97.647, "Customer ID": 32, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 32, "Time Delta (ti - ti-1)": 4.056, "Time-Weighted Queue": 28.39}, {"Step": 74, "Event Type": "ARRIVAL", "Time (ti)": 99.571, "Customer ID": 40, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 33, "Time Delta (ti - ti-1)": 1.923, "Time-Weighted Queue": 11.541}, {"Step": 75, "Event Type": "DEPARTURE", "Time (ti)": 100.592, "Customer ID": 33, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 33, "Time Delta (ti - ti-1)": 1.022, "Time-Weighted Queue": 7.151}, {"Step": 76, "Event Type": "ARRIVAL", "Time (ti)": 103.487, "Customer ID": 41, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 34, "Time Delta (ti - ti-1)": 2.895, "Time-Weighted Queue": 17.373}, {"Step": 77, "Event Type": "ARRIVAL", "Time (ti)": 103.718, "Customer ID": 42, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 34, "Time Delta (ti - ti-1)": 0.231, "Time-Weighted Queue": 1.616}, {"Step": 78, "Event Type": "DEPARTURE", "Time (ti)": 104.133, "Customer ID": 34, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 34, "Time Delta (ti - ti-1)": 0.414, "Time-Weighted Queue": 3.314}, {"Step": 79, "Event Type": "DEPARTURE", "Time (ti)": 104.428, "Customer ID": 35, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 35, "Time Delta (ti - ti-1)": 0.296, "Time-Weighted Queue": 2.069}, {"Step": 80, "Event Type": "ARRIVAL", "Time (ti)": 105.05, "Customer ID": 43, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 36, "Time Delta (ti - ti-1)": 0.622, "Time-Weighted Queue": 3.731}, {"Step": 81, "Event Type": "ARRIVAL", "Time (ti)": 107.979, "Customer ID": 44, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 36, "Time Delta (ti - ti-1)": 2.929, "Time-Weighted Queue": 20.502}, {"Step": 82, "Event Type": "ARRIVAL", "Time (ti)": 109.184, "Customer ID": 45, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 36, "Time Delta (ti - ti-1)": 1.205, "Time-Weighted Queue": 9.644}, {"Step": 83, "Event Type": "DEPARTURE", "Time (ti)": 109.201, "Customer ID": 36, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 36, "Time Delta (ti - ti-1)": 0.016, "Time-Weighted Queue": 0.147}, {"Step": 84, "Event Type": "ARRIVAL", "Time (ti)": 109.381, "Customer ID": 46, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 37, "Time Delta (ti - ti-1)": 0.181, "Time-Weighted Queue": 1.446}, {"Step": 85, "Event Type": "DEPARTURE", "Time (ti)": 110.095, "Customer ID": 37, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 37, "Time Delta (ti - ti-1)": 0.713, "Time-Weighted Queue": 6.419}, {"Step": 86, "Event Type": "ARRIVAL", "Time (ti)": 110.561, "Customer ID": 47, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 38, "Time Delta (ti - ti-1)": 0.467, "Time-Weighted Queue": 3.733}, {"Step": 87, "Event Type": "DEPARTURE", "Time (ti)": 113.233, "Customer ID": 38, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 38, "Time Delta (ti - ti-1)": 2.672, "Time-Weighted Queue": 24.05}, {"Step": 88, "Event Type": "ARRIVAL", "Time (ti)": 113.606, "Customer ID": 48, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 39, "Time Delta (ti - ti-1)": 0.372, "Time-Weighted Queue": 2.98}, {"Step": 89, "Event Type": "ARRIVAL", "Time (ti)": 115.523, "Customer ID": 49, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 39, "Time Delta (ti - ti-1)": 1.917, "Time-Weighted Queue": 17.255}, {"Step": 90, "Event Type": "ARRIVAL", "Time (ti)": 115.905, "Customer ID": 50, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 39, "Time Delta (ti - ti-1)": 0.382, "Time-Weighted Queue": 3.821}, {"Step": 91, "Event Type": "DEPARTURE", "Time (ti)": 118.471, "Customer ID": 39, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 39, "Time Delta (ti - ti-1)": 2.566, "Time-Weighted Queue": 28.222}, {"Step": 92, "Event Type": "ARRIVAL", "Time (ti)": 119.653, "Customer ID": 51, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 40, "Time Delta (ti - ti-1)": 1.182, "Time-Weighted Queue": 11.817}, {"Step": 93, "Event Type": "DEPARTURE", "Time (ti)": 121.904, "Customer ID": 40, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 40, "Time Delta (ti - ti-1)": 2.251, "Time-Weighted Queue": 24.763}, {"Step": 94, "Event Type": "ARRIVAL", "Time (ti)": 122.124, "Customer ID": 52, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 41, "Time Delta (ti - ti-1)": 0.22, "Time-Weighted Queue": 2.205}, {"Step": 95, "Event Type": "ARRIVAL", "Time (ti)": 124.167, "Customer ID": 53, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 41, "Time Delta (ti - ti-1)": 2.042, "Time-Weighted Queue": 22.467}, {"Step": 96, "Event Type": "DEPARTURE", "Time (ti)": 125.441, "Customer ID": 41, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 41, "Time Delta (ti - ti-1)": 1.274, "Time-Weighted Queue": 15.293}, {"Step": 97, "Event Type": "ARRIVAL", "Time (ti)": 126.386, "Customer ID": 54, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 42, "Time Delta (ti - ti-1)": 0.945, "Time-Weighted Queue": 10.391}, {"Step": 98, "Event Type": "ARRIVAL", "Time (ti)": 126.463, "Customer ID": 55, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 42, "Time Delta (ti - ti-1)": 0.077, "Time-Weighted Queue": 0.927}, {"Step": 99, "Event Type": "DEPARTURE", "Time (ti)": 126.78, "Customer ID": 42, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 42, "Time Delta (ti - ti-1)": 0.317, "Time-Weighted Queue": 4.12}, {"Step": 100, "Event Type": "ARRIVAL", "Time (ti)": 126.806, "Customer ID": 56, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 43, "Time Delta (ti - ti-1)": 0.026, "Time-Weighted Queue": 0.307}, {"Step": 101, "Event Type": "DEPARTURE", "Time (ti)": 126.857, "Customer ID": 43, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 43, "Time Delta (ti - ti-1)": 0.051, "Time-Weighted Queue": 0.664}, {"Step": 102, "Event Type": "DEPARTURE", "Time (ti)": 127.762, "Customer ID": 44, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 44, "Time Delta (ti - ti-1)": 0.906, "Time-Weighted Queue": 10.869}, {"Step": 103, "Event Type": "DEPARTURE", "Time (ti)": 129.467, "Customer ID": 45, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 45, "Time Delta (ti - ti-1)": 1.705, "Time-Weighted Queue": 18.756}, {"Step": 104, "Event Type": "ARRIVAL", "Time (ti)": 129.841, "Customer ID": 57, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 46, "Time Delta (ti - ti-1)": 0.373, "Time-Weighted Queue": 3.733}, {"Step": 105, "Event Type": "ARRIVAL", "Time (ti)": 130.701, "Customer ID": 58, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 46, "Time Delta (ti - ti-1)": 0.86, "Time-Weighted Queue": 9.462}, {"Step": 106, "Event Type": "ARRIVAL", "Time (ti)": 132.286, "Customer ID": 59, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 46, "Time Delta (ti - ti-1)": 1.585, "Time-Weighted Queue": 19.018}, {"Step": 107, "Event Type": "DEPARTURE", "Time (ti)": 135.182, "Customer ID": 46, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 46, "Time Delta (ti - ti-1)": 2.897, "Time-Weighted Queue": 37.656}, {"Step": 108, "Event Type": "DEPARTURE", "Time (ti)": 135.806, "Customer ID": 47, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 47, "Time Delta (ti - ti-1)": 0.624, "Time-Weighted Queue": 7.482}, {"Step": 109, "Event Type": "DEPARTURE", "Time (ti)": 135.998, "Customer ID": 48, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 48, "Time Delta (ti - ti-1)": 0.192, "Time-Weighted Queue": 2.115}, {"Step": 110, "Event Type": "ARRIVAL", "Time (ti)": 136.512, "Customer ID": 60, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 49, "Time Delta (ti - ti-1)": 0.514, "Time-Weighted Queue": 5.138}, {"Step": 111, "Event Type": "DEPARTURE", "Time (ti)": 136.819, "Customer ID": 49, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 49, "Time Delta (ti - ti-1)": 0.307, "Time-Weighted Queue": 3.38}, {"Step": 112, "Event Type": "ARRIVAL", "Time (ti)": 137.039, "Customer ID": 61, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 50, "Time Delta (ti - ti-1)": 0.22, "Time-Weighted Queue": 2.201}, {"Step": 113, "Event Type": "ARRIVAL", "Time (ti)": 141.992, "Customer ID": 62, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 50, "Time Delta (ti - ti-1)": 4.953, "Time-Weighted Queue": 54.479}, {"Step": 114, "Event Type": "DEPARTURE", "Time (ti)": 143.191, "Customer ID": 50, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 50, "Time Delta (ti - ti-1)": 1.199, "Time-Weighted Queue": 14.389}, {"Step": 115, "Event Type": "ARRIVAL", "Time (ti)": 145.003, "Customer ID": 63, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 51, "Time Delta (ti - ti-1)": 1.811, "Time-Weighted Queue": 19.925}, {"Step": 116, "Event Type": "DEPARTURE", "Time (ti)": 148.115, "Customer ID": 51, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 51, "Time Delta (ti - ti-1)": 3.112, "Time-Weighted Queue": 37.347}, {"Step": 117, "Event Type": "DEPARTURE", "Time (ti)": 148.61, "Customer ID": 52, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 52, "Time Delta (ti - ti-1)": 0.496, "Time-Weighted Queue": 5.451}, {"Step": 118, "Event Type": "ARRIVAL", "Time (ti)": 149.886, "Customer ID": 64, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 53, "Time Delta (ti - ti-1)": 1.276, "Time-Weighted Queue": 12.761}, {"Step": 119, "Event Type": "ARRIVAL", "Time (ti)": 152.212, "Customer ID": 65, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 53, "Time Delta (ti - ti-1)": 2.325, "Time-Weighted Queue": 25.578}, {"Step": 120, "Event Type": "DEPARTURE", "Time (ti)": 153.964, "Customer ID": 53, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 53, "Time Delta (ti - ti-1)": 1.753, "Time-Weighted Queue": 21.031}, {"Step": 121, "Event Type": "ARRIVAL", "Time (ti)": 157.154, "Customer ID": 66, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 54, "Time Delta (ti - ti-1)": 3.189, "Time-Weighted Queue": 35.084}, {"Step": 122, "Event Type": "ARRIVAL", "Time (ti)": 158.302, "Customer ID": 67, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 54, "Time Delta (ti - ti-1)": 1.148, "Time-Weighted Queue": 13.778}, {"Step": 123, "Event Type": "ARRIVAL", "Time (ti)": 158.652, "Customer ID": 68, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 54, "Time Delta (ti - ti-1)": 0.35, "Time-Weighted Queue": 4.547}, {"Step": 124, "Event Type": "DEPARTURE", "Time (ti)": 159.399, "Customer ID": 54, "Queue Length (NQi)": 14, "ATM Status": "BUSY", "Customer at ATM": 54, "Time Delta (ti - ti-1)": 0.747, "Time-Weighted Queue": 10.455}, {"Step": 125, "Event Type": "ARRIVAL", "Time (ti)": 159.428, "Customer ID": 69, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 55, "Time Delta (ti - ti-1)": 0.029, "Time-Weighted Queue": 0.381}, {"Step": 126, "Event Type": "DEPARTURE", "Time (ti)": 160.736, "Customer ID": 55, "Queue Length (NQi)": 14, "ATM Status": "BUSY", "Customer at ATM": 55, "Time Delta (ti - ti-1)": 1.308, "Time-Weighted Queue": 18.307}, {"Step": 127, "Event Type": "ARRIVAL", "Time (ti)": 164.539, "Customer ID": 70, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 56, "Time Delta (ti - ti-1)": 3.804, "Time-Weighted Queue": 49.45}, {"Step": 128, "Event Type": "ARRIVAL", "Time (ti)": 164.56, "Customer ID": 71, "Queue Length (NQi)": 14, "ATM Status": "BUSY", "Customer at ATM": 56, "Time Delta (ti - ti-1)": 0.021, "Time-Weighted Queue": 0.293}, {"Step": 129, "Event Type": "DEPARTURE", "Time (ti)": 165.467, "Customer ID": 56, "Queue Length (NQi)": 15, "ATM Status": "BUSY", "Customer at ATM": 56, "Time Delta (ti - ti-1)": 0.906, "Time-Weighted Queue": 13.597}, {"Step": 130, "Event Type": "ARRIVAL", "Time (ti)": 166.705, "Customer ID": 72, "Queue Length (NQi)": 14, "ATM Status": "BUSY", "Customer at ATM": 57, "Time Delta (ti - ti-1)": 1.238, "Time-Weighted Queue": 17.334}, {"Step": 131, "Event Type": "DEPARTURE", "Time (ti)": 166.763, "Customer ID": 57, "Queue Length (NQi)": 15, "ATM Status": "BUSY", "Customer at ATM": 57, "Time Delta (ti - ti-1)": 0.058, "Time-Weighted Queue": 0.877}, {"Step": 132, "Event Type": "DEPARTURE", "Time (ti)": 167.07, "Customer ID": 58, "Queue Length (NQi)": 14, "ATM Status": "BUSY", "Customer at ATM": 58, "Time Delta (ti - ti-1)": 0.306, "Time-Weighted Queue": 4.29}, {"Step": 133, "Event Type": "ARRIVAL", "Time (ti)": 167.458, "Customer ID": 73, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 59, "Time Delta (ti - ti-1)": 0.389, "Time-Weighted Queue": 5.052}, {"Step": 134, "Event Type": "DEPARTURE", "Time (ti)": 168.058, "Customer ID": 59, "Queue Length (NQi)": 14, "ATM Status": "BUSY", "Customer at ATM": 59, "Time Delta (ti - ti-1)": 0.6, "Time-Weighted Queue": 8.4}, {"Step": 135, "Event Type": "DEPARTURE", "Time (ti)": 168.995, "Customer ID": 60, "Queue Length (NQi)": 13, "ATM Status": "BUSY", "Customer at ATM": 60, "Time Delta (ti - ti-1)": 0.937, "Time-Weighted Queue": 12.18}, {"Step": 136, "Event Type": "DEPARTURE", "Time (ti)": 170.751, "Customer ID": 61, "Queue Length (NQi)": 12, "ATM Status": "BUSY", "Customer at ATM": 61, "Time Delta (ti - ti-1)": 1.755, "Time-Weighted Queue": 21.066}, {"Step": 137, "Event Type": "DEPARTURE", "Time (ti)": 173.665, "Customer ID": 62, "Queue Length (NQi)": 11, "ATM Status": "BUSY", "Customer at ATM": 62, "Time Delta (ti - ti-1)": 2.914, "Time-Weighted Queue": 32.052}, {"Step": 138, "Event Type": "DEPARTURE", "Time (ti)": 174.749, "Customer ID": 63, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 63, "Time Delta (ti - ti-1)": 1.085, "Time-Weighted Queue": 10.847}, {"Step": 139, "Event Type": "ARRIVAL", "Time (ti)": 176.048, "Customer ID": 74, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 64, "Time Delta (ti - ti-1)": 1.298, "Time-Weighted Queue": 11.686}, {"Step": 140, "Event Type": "DEPARTURE", "Time (ti)": 183.312, "Customer ID": 64, "Queue Length (NQi)": 10, "ATM Status": "BUSY", "Customer at ATM": 64, "Time Delta (ti - ti-1)": 7.264, "Time-Weighted Queue": 72.643}, {"Step": 141, "Event Type": "DEPARTURE", "Time (ti)": 184.008, "Customer ID": 65, "Queue Length (NQi)": 9, "ATM Status": "BUSY", "Customer at ATM": 65, "Time Delta (ti - ti-1)": 0.696, "Time-Weighted Queue": 6.265}, {"Step": 142, "Event Type": "DEPARTURE", "Time (ti)": 185.659, "Customer ID": 66, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 66, "Time Delta (ti - ti-1)": 1.65, "Time-Weighted Queue": 13.203}, {"Step": 143, "Event Type": "ARRIVAL", "Time (ti)": 185.894, "Customer ID": 75, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 67, "Time Delta (ti - ti-1)": 0.235, "Time-Weighted Queue": 1.646}, {"Step": 144, "Event Type": "DEPARTURE", "Time (ti)": 186.518, "Customer ID": 67, "Queue Length (NQi)": 8, "ATM Status": "BUSY", "Customer at ATM": 67, "Time Delta (ti - ti-1)": 0.624, "Time-Weighted Queue": 4.991}, {"Step": 145, "Event Type": "DEPARTURE", "Time (ti)": 186.608, "Customer ID": 68, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 68, "Time Delta (ti - ti-1)": 0.09, "Time-Weighted Queue": 0.631}, {"Step": 146, "Event Type": "ARRIVAL", "Time (ti)": 186.9, "Customer ID": 76, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 69, "Time Delta (ti - ti-1)": 0.292, "Time-Weighted Queue": 1.75}, {"Step": 147, "Event Type": "DEPARTURE", "Time (ti)": 188.865, "Customer ID": 69, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 69, "Time Delta (ti - ti-1)": 1.965, "Time-Weighted Queue": 13.758}, {"Step": 148, "Event Type": "DEPARTURE", "Time (ti)": 188.992, "Customer ID": 70, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 70, "Time Delta (ti - ti-1)": 0.127, "Time-Weighted Queue": 0.761}, {"Step": 149, "Event Type": "ARRIVAL", "Time (ti)": 188.995, "Customer ID": 77, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 71, "Time Delta (ti - ti-1)": 0.003, "Time-Weighted Queue": 0.016}, {"Step": 150, "Event Type": "DEPARTURE", "Time (ti)": 189.776, "Customer ID": 71, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 71, "Time Delta (ti - ti-1)": 0.781, "Time-Weighted Queue": 4.684}, {"Step": 151, "Event Type": "DEPARTURE", "Time (ti)": 190.433, "Customer ID": 72, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 72, "Time Delta (ti - ti-1)": 0.657, "Time-Weighted Queue": 3.286}, {"Step": 152, "Event Type": "DEPARTURE", "Time (ti)": 190.809, "Customer ID": 73, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 73, "Time Delta (ti - ti-1)": 0.376, "Time-Weighted Queue": 1.503}, {"Step": 153, "Event Type": "DEPARTURE", "Time (ti)": 192.422, "Customer ID": 74, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 74, "Time Delta (ti - ti-1)": 1.613, "Time-Weighted Queue": 4.84}, {"Step": 154, "Event Type": "ARRIVAL", "Time (ti)": 196.162, "Customer ID": 78, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 75, "Time Delta (ti - ti-1)": 3.74, "Time-Weighted Queue": 7.479}, {"Step": 155, "Event Type": "ARRIVAL", "Time (ti)": 196.993, "Customer ID": 79, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 75, "Time Delta (ti - ti-1)": 0.831, "Time-Weighted Queue": 2.494}, {"Step": 156, "Event Type": "ARRIVAL", "Time (ti)": 200.339, "Customer ID": 80, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 75, "Time Delta (ti - ti-1)": 3.345, "Time-Weighted Queue": 13.382}, {"Step": 157, "Event Type": "DEPARTURE", "Time (ti)": 202.608, "Customer ID": 75, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 75, "Time Delta (ti - ti-1)": 2.269, "Time-Weighted Queue": 11.346}, {"Step": 158, "Event Type": "DEPARTURE", "Time (ti)": 203.259, "Customer ID": 76, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 76, "Time Delta (ti - ti-1)": 0.651, "Time-Weighted Queue": 2.605}, {"Step": 159, "Event Type": "ARRIVAL", "Time (ti)": 204.64, "Customer ID": 81, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 77, "Time Delta (ti - ti-1)": 1.381, "Time-Weighted Queue": 4.144}, {"Step": 160, "Event Type": "ARRIVAL", "Time (ti)": 206.016, "Customer ID": 82, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 77, "Time Delta (ti - ti-1)": 1.376, "Time-Weighted Queue": 5.502}, {"Step": 161, "Event Type": "DEPARTURE", "Time (ti)": 206.386, "Customer ID": 77, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 77, "Time Delta (ti - ti-1)": 0.37, "Time-Weighted Queue": 1.849}, {"Step": 162, "Event Type": "DEPARTURE", "Time (ti)": 208.795, "Customer ID": 78, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 78, "Time Delta (ti - ti-1)": 2.409, "Time-Weighted Queue": 9.637}, {"Step": 163, "Event Type": "ARRIVAL", "Time (ti)": 209.017, "Customer ID": 83, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 79, "Time Delta (ti - ti-1)": 0.222, "Time-Weighted Queue": 0.667}, {"Step": 164, "Event Type": "ARRIVAL", "Time (ti)": 209.301, "Customer ID": 84, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 79, "Time Delta (ti - ti-1)": 0.284, "Time-Weighted Queue": 1.136}, {"Step": 165, "Event Type": "DEPARTURE", "Time (ti)": 210.637, "Customer ID": 79, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 79, "Time Delta (ti - ti-1)": 1.335, "Time-Weighted Queue": 6.677}, {"Step": 166, "Event Type": "DEPARTURE", "Time (ti)": 211.565, "Customer ID": 80, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 80, "Time Delta (ti - ti-1)": 0.928, "Time-Weighted Queue": 3.713}, {"Step": 167, "Event Type": "DEPARTURE", "Time (ti)": 212.06, "Customer ID": 81, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 81, "Time Delta (ti - ti-1)": 0.495, "Time-Weighted Queue": 1.486}, {"Step": 168, "Event Type": "DEPARTURE", "Time (ti)": 212.16, "Customer ID": 82, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 82, "Time Delta (ti - ti-1)": 0.1, "Time-Weighted Queue": 0.2}, {"Step": 169, "Event Type": "DEPARTURE", "Time (ti)": 214.305, "Customer ID": 83, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 83, "Time Delta (ti - ti-1)": 2.145, "Time-Weighted Queue": 2.145}, {"Step": 170, "Event Type": "ARRIVAL", "Time (ti)": 214.712, "Customer ID": 85, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 84, "Time Delta (ti - ti-1)": 0.407, "Time-Weighted Queue": 0.0}, {"Step": 171, "Event Type": "ARRIVAL", "Time (ti)": 214.762, "Customer ID": 86, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 84, "Time Delta (ti - ti-1)": 0.05, "Time-Weighted Queue": 0.05}, {"Step": 172, "Event Type": "ARRIVAL", "Time (ti)": 216.915, "Customer ID": 87, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 84, "Time Delta (ti - ti-1)": 2.153, "Time-Weighted Queue": 4.306}, {"Step": 173, "Event Type": "DEPARTURE", "Time (ti)": 217.022, "Customer ID": 84, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 84, "Time Delta (ti - ti-1)": 0.107, "Time-Weighted Queue": 0.32}, {"Step": 174, "Event Type": "ARRIVAL", "Time (ti)": 217.686, "Customer ID": 88, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 85, "Time Delta (ti - ti-1)": 0.664, "Time-Weighted Queue": 1.328}, {"Step": 175, "Event Type": "ARRIVAL", "Time (ti)": 218.261, "Customer ID": 89, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 85, "Time Delta (ti - ti-1)": 0.575, "Time-Weighted Queue": 1.724}, {"Step": 176, "Event Type": "DEPARTURE", "Time (ti)": 219.508, "Customer ID": 85, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 85, "Time Delta (ti - ti-1)": 1.248, "Time-Weighted Queue": 4.992}, {"Step": 177, "Event Type": "DEPARTURE", "Time (ti)": 220.682, "Customer ID": 86, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 86, "Time Delta (ti - ti-1)": 1.174, "Time-Weighted Queue": 3.521}, {"Step": 178, "Event Type": "ARRIVAL", "Time (ti)": 221.783, "Customer ID": 90, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 87, "Time Delta (ti - ti-1)": 1.101, "Time-Weighted Queue": 2.202}, {"Step": 179, "Event Type": "ARRIVAL", "Time (ti)": 222.227, "Customer ID": 91, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 87, "Time Delta (ti - ti-1)": 0.444, "Time-Weighted Queue": 1.331}, {"Step": 180, "Event Type": "ARRIVAL", "Time (ti)": 223.478, "Customer ID": 92, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 87, "Time Delta (ti - ti-1)": 1.251, "Time-Weighted Queue": 5.006}, {"Step": 181, "Event Type": "ARRIVAL", "Time (ti)": 223.84, "Customer ID": 93, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 87, "Time Delta (ti - ti-1)": 0.361, "Time-Weighted Queue": 1.807}, {"Step": 182, "Event Type": "DEPARTURE", "Time (ti)": 227.307, "Customer ID": 87, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 87, "Time Delta (ti - ti-1)": 3.467, "Time-Weighted Queue": 20.803}, {"Step": 183, "Event Type": "ARRIVAL", "Time (ti)": 231.598, "Customer ID": 94, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 88, "Time Delta (ti - ti-1)": 4.291, "Time-Weighted Queue": 21.457}, {"Step": 184, "Event Type": "DEPARTURE", "Time (ti)": 232.343, "Customer ID": 88, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 88, "Time Delta (ti - ti-1)": 0.745, "Time-Weighted Queue": 4.467}, {"Step": 185, "Event Type": "ARRIVAL", "Time (ti)": 232.493, "Customer ID": 95, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 89, "Time Delta (ti - ti-1)": 0.15, "Time-Weighted Queue": 0.752}, {"Step": 186, "Event Type": "DEPARTURE", "Time (ti)": 234.932, "Customer ID": 89, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 89, "Time Delta (ti - ti-1)": 2.439, "Time-Weighted Queue": 14.631}, {"Step": 187, "Event Type": "DEPARTURE", "Time (ti)": 236.876, "Customer ID": 90, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 90, "Time Delta (ti - ti-1)": 1.944, "Time-Weighted Queue": 9.722}, {"Step": 188, "Event Type": "ARRIVAL", "Time (ti)": 237.592, "Customer ID": 96, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 91, "Time Delta (ti - ti-1)": 0.716, "Time-Weighted Queue": 2.862}, {"Step": 189, "Event Type": "ARRIVAL", "Time (ti)": 238.422, "Customer ID": 97, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 91, "Time Delta (ti - ti-1)": 0.831, "Time-Weighted Queue": 4.153}, {"Step": 190, "Event Type": "DEPARTURE", "Time (ti)": 238.686, "Customer ID": 91, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 91, "Time Delta (ti - ti-1)": 0.264, "Time-Weighted Queue": 1.584}, {"Step": 191, "Event Type": "ARRIVAL", "Time (ti)": 238.716, "Customer ID": 98, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 92, "Time Delta (ti - ti-1)": 0.029, "Time-Weighted Queue": 0.146}, {"Step": 192, "Event Type": "DEPARTURE", "Time (ti)": 244.147, "Customer ID": 92, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 92, "Time Delta (ti - ti-1)": 5.431, "Time-Weighted Queue": 32.587}, {"Step": 193, "Event Type": "ARRIVAL", "Time (ti)": 245.636, "Customer ID": 99, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 93, "Time Delta (ti - ti-1)": 1.489, "Time-Weighted Queue": 7.446}, {"Step": 194, "Event Type": "DEPARTURE", "Time (ti)": 246.553, "Customer ID": 93, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 93, "Time Delta (ti - ti-1)": 0.917, "Time-Weighted Queue": 5.504}, {"Step": 195, "Event Type": "ARRIVAL", "Time (ti)": 246.878, "Customer ID": 100, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 94, "Time Delta (ti - ti-1)": 0.325, "Time-Weighted Queue": 1.624}, {"Step": 196, "Event Type": "DEPARTURE", "Time (ti)": 247.584, "Customer ID": 94, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 94, "Time Delta (ti - ti-1)": 0.706, "Time-Weighted Queue": 4.237}, {"Step": 197, "Event Type": "ARRIVAL", "Time (ti)": 250.761, "Customer ID": 101, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 95, "Time Delta (ti - ti-1)": 3.177, "Time-Weighted Queue": 15.886}, {"Step": 198, "Event Type": "DEPARTURE", "Time (ti)": 253.042, "Customer ID": 95, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 95, "Time Delta (ti - ti-1)": 2.281, "Time-Weighted Queue": 13.683}, {"Step": 199, "Event Type": "DEPARTURE", "Time (ti)": 256.674, "Customer ID": 96, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 96, "Time Delta (ti - ti-1)": 3.633, "Time-Weighted Queue": 18.163}, {"Step": 200, "Event Type": "ARRIVAL", "Time (ti)": 257.305, "Customer ID": 102, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 97, "Time Delta (ti - ti-1)": 0.63, "Time-Weighted Queue": 2.521}, {"Step": 201, "Event Type": "ARRIVAL", "Time (ti)": 257.568, "Customer ID": 103, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 97, "Time Delta (ti - ti-1)": 0.264, "Time-Weighted Queue": 1.318}, {"Step": 202, "Event Type": "ARRIVAL", "Time (ti)": 258.097, "Customer ID": 104, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 97, "Time Delta (ti - ti-1)": 0.529, "Time-Weighted Queue": 3.173}, {"Step": 203, "Event Type": "DEPARTURE", "Time (ti)": 259.14, "Customer ID": 97, "Queue Length (NQi)": 7, "ATM Status": "BUSY", "Customer at ATM": 97, "Time Delta (ti - ti-1)": 1.043, "Time-Weighted Queue": 7.299}, {"Step": 204, "Event Type": "DEPARTURE", "Time (ti)": 261.378, "Customer ID": 98, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 98, "Time Delta (ti - ti-1)": 2.238, "Time-Weighted Queue": 13.428}, {"Step": 205, "Event Type": "DEPARTURE", "Time (ti)": 261.4, "Customer ID": 99, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 99, "Time Delta (ti - ti-1)": 0.022, "Time-Weighted Queue": 0.111}, {"Step": 206, "Event Type": "DEPARTURE", "Time (ti)": 261.657, "Customer ID": 100, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 100, "Time Delta (ti - ti-1)": 0.257, "Time-Weighted Queue": 1.027}, {"Step": 207, "Event Type": "DEPARTURE", "Time (ti)": 264.271, "Customer ID": 101, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 101, "Time Delta (ti - ti-1)": 2.614, "Time-Weighted Queue": 7.842}, {"Step": 208, "Event Type": "DEPARTURE", "Time (ti)": 264.283, "Customer ID": 102, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 102, "Time Delta (ti - ti-1)": 0.012, "Time-Weighted Queue": 0.024}, {"Step": 209, "Event Type": "DEPARTURE", "Time (ti)": 264.704, "Customer ID": 103, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 103, "Time Delta (ti - ti-1)": 0.421, "Time-Weighted Queue": 0.421}, {"Step": 210, "Event Type": "ARRIVAL", "Time (ti)": 264.962, "Customer ID": 105, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 104, "Time Delta (ti - ti-1)": 0.258, "Time-Weighted Queue": 0.0}, {"Step": 211, "Event Type": "DEPARTURE", "Time (ti)": 266.614, "Customer ID": 104, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 104, "Time Delta (ti - ti-1)": 1.652, "Time-Weighted Queue": 1.652}, {"Step": 212, "Event Type": "ARRIVAL", "Time (ti)": 268.494, "Customer ID": 106, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 105, "Time Delta (ti - ti-1)": 1.88, "Time-Weighted Queue": 0.0}, {"Step": 213, "Event Type": "DEPARTURE", "Time (ti)": 269.147, "Customer ID": 105, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 105, "Time Delta (ti - ti-1)": 0.653, "Time-Weighted Queue": 0.653}, {"Step": 214, "Event Type": "ARRIVAL", "Time (ti)": 269.256, "Customer ID": 107, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 106, "Time Delta (ti - ti-1)": 0.109, "Time-Weighted Queue": 0.0}, {"Step": 215, "Event Type": "ARRIVAL", "Time (ti)": 270.068, "Customer ID": 108, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 106, "Time Delta (ti - ti-1)": 0.812, "Time-Weighted Queue": 0.812}, {"Step": 216, "Event Type": "ARRIVAL", "Time (ti)": 271.249, "Customer ID": 109, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 106, "Time Delta (ti - ti-1)": 1.181, "Time-Weighted Queue": 2.362}, {"Step": 217, "Event Type": "DEPARTURE", "Time (ti)": 272.136, "Customer ID": 106, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 106, "Time Delta (ti - ti-1)": 0.886, "Time-Weighted Queue": 2.659}, {"Step": 218, "Event Type": "DEPARTURE", "Time (ti)": 274.653, "Customer ID": 107, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 107, "Time Delta (ti - ti-1)": 2.517, "Time-Weighted Queue": 5.034}, {"Step": 219, "Event Type": "ARRIVAL", "Time (ti)": 275.366, "Customer ID": 110, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 108, "Time Delta (ti - ti-1)": 0.714, "Time-Weighted Queue": 0.714}, {"Step": 220, "Event Type": "ARRIVAL", "Time (ti)": 278.582, "Customer ID": 111, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 108, "Time Delta (ti - ti-1)": 3.215, "Time-Weighted Queue": 6.431}, {"Step": 221, "Event Type": "DEPARTURE", "Time (ti)": 279.193, "Customer ID": 108, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 108, "Time Delta (ti - ti-1)": 0.612, "Time-Weighted Queue": 1.835}, {"Step": 222, "Event Type": "DEPARTURE", "Time (ti)": 279.429, "Customer ID": 109, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 109, "Time Delta (ti - ti-1)": 0.236, "Time-Weighted Queue": 0.472}, {"Step": 223, "Event Type": "DEPARTURE", "Time (ti)": 280.53, "Customer ID": 110, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 110, "Time Delta (ti - ti-1)": 1.1, "Time-Weighted Queue": 1.1}, {"Step": 224, "Event Type": "ARRIVAL", "Time (ti)": 281.102, "Customer ID": 112, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 111, "Time Delta (ti - ti-1)": 0.572, "Time-Weighted Queue": 0.0}, {"Step": 225, "Event Type": "DEPARTURE", "Time (ti)": 281.269, "Customer ID": 111, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 111, "Time Delta (ti - ti-1)": 0.167, "Time-Weighted Queue": 0.167}, {"Step": 226, "Event Type": "ARRIVAL", "Time (ti)": 281.941, "Customer ID": 113, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 112, "Time Delta (ti - ti-1)": 0.672, "Time-Weighted Queue": 0.0}, {"Step": 227, "Event Type": "ARRIVAL", "Time (ti)": 283.439, "Customer ID": 114, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 112, "Time Delta (ti - ti-1)": 1.498, "Time-Weighted Queue": 1.498}, {"Step": 228, "Event Type": "DEPARTURE", "Time (ti)": 289.939, "Customer ID": 112, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 112, "Time Delta (ti - ti-1)": 6.5, "Time-Weighted Queue": 12.999}, {"Step": 229, "Event Type": "ARRIVAL", "Time (ti)": 290.117, "Customer ID": 115, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 113, "Time Delta (ti - ti-1)": 0.179, "Time-Weighted Queue": 0.179}, {"Step": 230, "Event Type": "DEPARTURE", "Time (ti)": 292.332, "Customer ID": 113, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 113, "Time Delta (ti - ti-1)": 2.215, "Time-Weighted Queue": 4.43}, {"Step": 231, "Event Type": "DEPARTURE", "Time (ti)": 294.009, "Customer ID": 114, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 114, "Time Delta (ti - ti-1)": 1.676, "Time-Weighted Queue": 1.676}, {"Step": 232, "Event Type": "ARRIVAL", "Time (ti)": 294.869, "Customer ID": 116, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 115, "Time Delta (ti - ti-1)": 0.86, "Time-Weighted Queue": 0.0}, {"Step": 233, "Event Type": "DEPARTURE", "Time (ti)": 296.073, "Customer ID": 115, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 115, "Time Delta (ti - ti-1)": 1.204, "Time-Weighted Queue": 1.204}, {"Step": 234, "Event Type": "DEPARTURE", "Time (ti)": 296.594, "Customer ID": 116, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 116, "Time Delta (ti - ti-1)": 0.521, "Time-Weighted Queue": 0.0}, {"Step": 235, "Event Type": "ARRIVAL", "Time (ti)": 296.904, "Customer ID": 117, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 0.309, "Time-Weighted Queue": 0.0}, {"Step": 236, "Event Type": "ARRIVAL", "Time (ti)": 297.892, "Customer ID": 118, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 117, "Time Delta (ti - ti-1)": 0.989, "Time-Weighted Queue": 0.0}, {"Step": 237, "Event Type": "ARRIVAL", "Time (ti)": 297.966, "Customer ID": 119, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 117, "Time Delta (ti - ti-1)": 0.074, "Time-Weighted Queue": 0.074}, {"Step": 238, "Event Type": "DEPARTURE", "Time (ti)": 299.98, "Customer ID": 117, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 117, "Time Delta (ti - ti-1)": 2.014, "Time-Weighted Queue": 4.027}, {"Step": 239, "Event Type": "DEPARTURE", "Time (ti)": 300.448, "Customer ID": 118, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 118, "Time Delta (ti - ti-1)": 0.468, "Time-Weighted Queue": 0.468}, {"Step": 240, "Event Type": "ARRIVAL", "Time (ti)": 301.077, "Customer ID": 120, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 119, "Time Delta (ti - ti-1)": 0.629, "Time-Weighted Queue": 0.0}, {"Step": 241, "Event Type": "DEPARTURE", "Time (ti)": 307.218, "Customer ID": 119, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 119, "Time Delta (ti - ti-1)": 6.141, "Time-Weighted Queue": 6.141}, {"Step": 242, "Event Type": "ARRIVAL", "Time (ti)": 310.31, "Customer ID": 121, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 120, "Time Delta (ti - ti-1)": 3.092, "Time-Weighted Queue": 0.0}, {"Step": 243, "Event Type": "ARRIVAL", "Time (ti)": 311.697, "Customer ID": 122, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 120, "Time Delta (ti - ti-1)": 1.387, "Time-Weighted Queue": 1.387}, {"Step": 244, "Event Type": "ARRIVAL", "Time (ti)": 311.743, "Customer ID": 123, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 120, "Time Delta (ti - ti-1)": 0.047, "Time-Weighted Queue": 0.093}, {"Step": 245, "Event Type": "DEPARTURE", "Time (ti)": 313.131, "Customer ID": 120, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 120, "Time Delta (ti - ti-1)": 1.387, "Time-Weighted Queue": 4.162}, {"Step": 246, "Event Type": "DEPARTURE", "Time (ti)": 314.472, "Customer ID": 121, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 121, "Time Delta (ti - ti-1)": 1.341, "Time-Weighted Queue": 2.683}, {"Step": 247, "Event Type": "ARRIVAL", "Time (ti)": 319.65, "Customer ID": 124, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 122, "Time Delta (ti - ti-1)": 5.178, "Time-Weighted Queue": 5.178}, {"Step": 248, "Event Type": "DEPARTURE", "Time (ti)": 322.634, "Customer ID": 122, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 122, "Time Delta (ti - ti-1)": 2.984, "Time-Weighted Queue": 5.968}, {"Step": 249, "Event Type": "DEPARTURE", "Time (ti)": 327.236, "Customer ID": 123, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 123, "Time Delta (ti - ti-1)": 4.602, "Time-Weighted Queue": 4.602}, {"Step": 250, "Event Type": "DEPARTURE", "Time (ti)": 328.073, "Customer ID": 124, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 124, "Time Delta (ti - ti-1)": 0.837, "Time-Weighted Queue": 0.0}, {"Step": 251, "Event Type": "ARRIVAL", "Time (ti)": 329.591, "Customer ID": 125, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.518, "Time-Weighted Queue": 0.0}, {"Step": 252, "Event Type": "DEPARTURE", "Time (ti)": 330.758, "Customer ID": 125, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 125, "Time Delta (ti - ti-1)": 1.167, "Time-Weighted Queue": 0.0}, {"Step": 253, "Event Type": "ARRIVAL", "Time (ti)": 335.305, "Customer ID": 126, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 4.547, "Time-Weighted Queue": 0.0}, {"Step": 254, "Event Type": "ARRIVAL", "Time (ti)": 335.863, "Customer ID": 127, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 126, "Time Delta (ti - ti-1)": 0.557, "Time-Weighted Queue": 0.0}, {"Step": 255, "Event Type": "DEPARTURE", "Time (ti)": 336.22, "Customer ID": 126, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 126, "Time Delta (ti - ti-1)": 0.358, "Time-Weighted Queue": 0.358}, {"Step": 256, "Event Type": "ARRIVAL", "Time (ti)": 338.304, "Customer ID": 128, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 127, "Time Delta (ti - ti-1)": 2.084, "Time-Weighted Queue": 0.0}, {"Step": 257, "Event Type": "ARRIVAL", "Time (ti)": 341.876, "Customer ID": 129, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 127, "Time Delta (ti - ti-1)": 3.572, "Time-Weighted Queue": 3.572}, {"Step": 258, "Event Type": "DEPARTURE", "Time (ti)": 342.823, "Customer ID": 127, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 127, "Time Delta (ti - ti-1)": 0.947, "Time-Weighted Queue": 1.894}, {"Step": 259, "Event Type": "DEPARTURE", "Time (ti)": 343.069, "Customer ID": 128, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 128, "Time Delta (ti - ti-1)": 0.245, "Time-Weighted Queue": 0.245}, {"Step": 260, "Event Type": "ARRIVAL", "Time (ti)": 344.409, "Customer ID": 130, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 129, "Time Delta (ti - ti-1)": 1.34, "Time-Weighted Queue": 0.0}, {"Step": 261, "Event Type": "DEPARTURE", "Time (ti)": 345.359, "Customer ID": 129, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 129, "Time Delta (ti - ti-1)": 0.951, "Time-Weighted Queue": 0.951}, {"Step": 262, "Event Type": "DEPARTURE", "Time (ti)": 345.722, "Customer ID": 130, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 130, "Time Delta (ti - ti-1)": 0.362, "Time-Weighted Queue": 0.0}, {"Step": 263, "Event Type": "ARRIVAL", "Time (ti)": 358.24, "Customer ID": 131, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 12.519, "Time-Weighted Queue": 0.0}, {"Step": 264, "Event Type": "DEPARTURE", "Time (ti)": 359.993, "Customer ID": 131, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 131, "Time Delta (ti - ti-1)": 1.753, "Time-Weighted Queue": 0.0}, {"Step": 265, "Event Type": "ARRIVAL", "Time (ti)": 364.536, "Customer ID": 132, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 4.543, "Time-Weighted Queue": 0.0}, {"Step": 266, "Event Type": "DEPARTURE", "Time (ti)": 367.776, "Customer ID": 132, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 132, "Time Delta (ti - ti-1)": 3.24, "Time-Weighted Queue": 0.0}, {"Step": 267, "Event Type": "ARRIVAL", "Time (ti)": 368.118, "Customer ID": 133, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 0.342, "Time-Weighted Queue": 0.0}, {"Step": 268, "Event Type": "ARRIVAL", "Time (ti)": 369.455, "Customer ID": 134, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 133, "Time Delta (ti - ti-1)": 1.336, "Time-Weighted Queue": 0.0}, {"Step": 269, "Event Type": "ARRIVAL", "Time (ti)": 370.497, "Customer ID": 135, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 133, "Time Delta (ti - ti-1)": 1.043, "Time-Weighted Queue": 1.043}, {"Step": 270, "Event Type": "DEPARTURE", "Time (ti)": 371.028, "Customer ID": 133, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 133, "Time Delta (ti - ti-1)": 0.53, "Time-Weighted Queue": 1.061}, {"Step": 271, "Event Type": "DEPARTURE", "Time (ti)": 375.015, "Customer ID": 134, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 134, "Time Delta (ti - ti-1)": 3.987, "Time-Weighted Queue": 3.987}, {"Step": 272, "Event Type": "ARRIVAL", "Time (ti)": 375.47, "Customer ID": 136, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 135, "Time Delta (ti - ti-1)": 0.455, "Time-Weighted Queue": 0.0}, {"Step": 273, "Event Type": "DEPARTURE", "Time (ti)": 379.858, "Customer ID": 135, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 135, "Time Delta (ti - ti-1)": 4.388, "Time-Weighted Queue": 4.388}, {"Step": 274, "Event Type": "DEPARTURE", "Time (ti)": 381.577, "Customer ID": 136, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 136, "Time Delta (ti - ti-1)": 1.719, "Time-Weighted Queue": 0.0}, {"Step": 275, "Event Type": "ARRIVAL", "Time (ti)": 382.803, "Customer ID": 137, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.227, "Time-Weighted Queue": 0.0}, {"Step": 276, "Event Type": "DEPARTURE", "Time (ti)": 384.474, "Customer ID": 137, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 137, "Time Delta (ti - ti-1)": 1.671, "Time-Weighted Queue": 0.0}, {"Step": 277, "Event Type": "ARRIVAL", "Time (ti)": 387.606, "Customer ID": 138, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 3.132, "Time-Weighted Queue": 0.0}, {"Step": 278, "Event Type": "DEPARTURE", "Time (ti)": 390.126, "Customer ID": 138, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 138, "Time Delta (ti - ti-1)": 2.519, "Time-Weighted Queue": 0.0}, {"Step": 279, "Event Type": "ARRIVAL", "Time (ti)": 391.238, "Customer ID": 139, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.112, "Time-Weighted Queue": 0.0}, {"Step": 280, "Event Type": "DEPARTURE", "Time (ti)": 395.051, "Customer ID": 139, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 139, "Time Delta (ti - ti-1)": 3.813, "Time-Weighted Queue": 0.0}, {"Step": 281, "Event Type": "ARRIVAL", "Time (ti)": 397.86, "Customer ID": 140, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 2.809, "Time-Weighted Queue": 0.0}, {"Step": 282, "Event Type": "DEPARTURE", "Time (ti)": 398.85, "Customer ID": 140, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 140, "Time Delta (ti - ti-1)": 0.99, "Time-Weighted Queue": 0.0}, {"Step": 283, "Event Type": "ARRIVAL", "Time (ti)": 399.273, "Customer ID": 141, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 0.423, "Time-Weighted Queue": 0.0}, {"Step": 284, "Event Type": "DEPARTURE", "Time (ti)": 399.51, "Customer ID": 141, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 141, "Time Delta (ti - ti-1)": 0.237, "Time-Weighted Queue": 0.0}, {"Step": 285, "Event Type": "ARRIVAL", "Time (ti)": 401.863, "Customer ID": 142, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 2.353, "Time-Weighted Queue": 0.0}, {"Step": 286, "Event Type": "DEPARTURE", "Time (ti)": 401.951, "Customer ID": 142, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 142, "Time Delta (ti - ti-1)": 0.088, "Time-Weighted Queue": 0.0}, {"Step": 287, "Event Type": "ARRIVAL", "Time (ti)": 403.743, "Customer ID": 143, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.792, "Time-Weighted Queue": 0.0}, {"Step": 288, "Event Type": "ARRIVAL", "Time (ti)": 404.756, "Customer ID": 144, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 143, "Time Delta (ti - ti-1)": 1.013, "Time-Weighted Queue": 0.0}, {"Step": 289, "Event Type": "DEPARTURE", "Time (ti)": 405.62, "Customer ID": 143, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 143, "Time Delta (ti - ti-1)": 0.865, "Time-Weighted Queue": 0.865}, {"Step": 290, "Event Type": "DEPARTURE", "Time (ti)": 405.695, "Customer ID": 144, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 144, "Time Delta (ti - ti-1)": 0.074, "Time-Weighted Queue": 0.0}, {"Step": 291, "Event Type": "ARRIVAL", "Time (ti)": 407.437, "Customer ID": 145, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.742, "Time-Weighted Queue": 0.0}, {"Step": 292, "Event Type": "DEPARTURE", "Time (ti)": 407.528, "Customer ID": 145, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 145, "Time Delta (ti - ti-1)": 0.091, "Time-Weighted Queue": 0.0}, {"Step": 293, "Event Type": "ARRIVAL", "Time (ti)": 412.625, "Customer ID": 146, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 5.097, "Time-Weighted Queue": 0.0}, {"Step": 294, "Event Type": "ARRIVAL", "Time (ti)": 413.032, "Customer ID": 147, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 146, "Time Delta (ti - ti-1)": 0.408, "Time-Weighted Queue": 0.0}, {"Step": 295, "Event Type": "DEPARTURE", "Time (ti)": 413.696, "Customer ID": 146, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 146, "Time Delta (ti - ti-1)": 0.664, "Time-Weighted Queue": 0.664}, {"Step": 296, "Event Type": "ARRIVAL", "Time (ti)": 415.248, "Customer ID": 148, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 147, "Time Delta (ti - ti-1)": 1.552, "Time-Weighted Queue": 0.0}, {"Step": 297, "Event Type": "ARRIVAL", "Time (ti)": 415.978, "Customer ID": 149, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 147, "Time Delta (ti - ti-1)": 0.729, "Time-Weighted Queue": 0.729}, {"Step": 298, "Event Type": "DEPARTURE", "Time (ti)": 417.224, "Customer ID": 147, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 147, "Time Delta (ti - ti-1)": 1.246, "Time-Weighted Queue": 2.492}, {"Step": 299, "Event Type": "DEPARTURE", "Time (ti)": 417.438, "Customer ID": 148, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 148, "Time Delta (ti - ti-1)": 0.214, "Time-Weighted Queue": 0.214}, {"Step": 300, "Event Type": "DEPARTURE", "Time (ti)": 417.565, "Customer ID": 149, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 149, "Time Delta (ti - ti-1)": 0.127, "Time-Weighted Queue": 0.0}, {"Step": 301, "Event Type": "ARRIVAL", "Time (ti)": 418.903, "Customer ID": 150, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.338, "Time-Weighted Queue": 0.0}, {"Step": 302, "Event Type": "DEPARTURE", "Time (ti)": 420.722, "Customer ID": 150, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 150, "Time Delta (ti - ti-1)": 1.819, "Time-Weighted Queue": 0.0}, {"Step": 303, "Event Type": "ARRIVAL", "Time (ti)": 421.237, "Customer ID": 151, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 0.515, "Time-Weighted Queue": 0.0}, {"Step": 304, "Event Type": "DEPARTURE", "Time (ti)": 423.672, "Customer ID": 151, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 151, "Time Delta (ti - ti-1)": 2.435, "Time-Weighted Queue": 0.0}, {"Step": 305, "Event Type": "ARRIVAL", "Time (ti)": 425.122, "Customer ID": 152, "Queue Length (NQi)": 0, "ATM Status": "IDLE", "Customer at ATM": "-", "Time Delta (ti - ti-1)": 1.45, "Time-Weighted Queue": 0.0}, {"Step": 306, "Event Type": "ARRIVAL", "Time (ti)": 427.301, "Customer ID": 153, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 152, "Time Delta (ti - ti-1)": 2.179, "Time-Weighted Queue": 0.0}, {"Step": 307, "Event Type": "ARRIVAL", "Time (ti)": 428.471, "Customer ID": 154, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 152, "Time Delta (ti - ti-1)": 1.17, "Time-Weighted Queue": 1.17}, {"Step": 308, "Event Type": "ARRIVAL", "Time (ti)": 433.228, "Customer ID": 155, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 152, "Time Delta (ti - ti-1)": 4.757, "Time-Weighted Queue": 9.514}, {"Step": 309, "Event Type": "DEPARTURE", "Time (ti)": 434.058, "Customer ID": 152, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 152, "Time Delta (ti - ti-1)": 0.831, "Time-Weighted Queue": 2.492}, {"Step": 310, "Event Type": "ARRIVAL", "Time (ti)": 434.175, "Customer ID": 156, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 153, "Time Delta (ti - ti-1)": 0.117, "Time-Weighted Queue": 0.234}, {"Step": 311, "Event Type": "ARRIVAL", "Time (ti)": 434.42, "Customer ID": 157, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 153, "Time Delta (ti - ti-1)": 0.245, "Time-Weighted Queue": 0.735}, {"Step": 312, "Event Type": "ARRIVAL", "Time (ti)": 434.497, "Customer ID": 158, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 153, "Time Delta (ti - ti-1)": 0.077, "Time-Weighted Queue": 0.308}, {"Step": 313, "Event Type": "DEPARTURE", "Time (ti)": 435.446, "Customer ID": 153, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 153, "Time Delta (ti - ti-1)": 0.948, "Time-Weighted Queue": 4.74}, {"Step": 314, "Event Type": "DEPARTURE", "Time (ti)": 439.784, "Customer ID": 154, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 154, "Time Delta (ti - ti-1)": 4.339, "Time-Weighted Queue": 17.355}, {"Step": 315, "Event Type": "DEPARTURE", "Time (ti)": 442.642, "Customer ID": 155, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 155, "Time Delta (ti - ti-1)": 2.858, "Time-Weighted Queue": 8.573}, {"Step": 316, "Event Type": "DEPARTURE", "Time (ti)": 443.904, "Customer ID": 156, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 156, "Time Delta (ti - ti-1)": 1.262, "Time-Weighted Queue": 2.524}, {"Step": 317, "Event Type": "ARRIVAL", "Time (ti)": 444.36, "Customer ID": 159, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 157, "Time Delta (ti - ti-1)": 0.456, "Time-Weighted Queue": 0.456}, {"Step": 318, "Event Type": "DEPARTURE", "Time (ti)": 444.361, "Customer ID": 157, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 157, "Time Delta (ti - ti-1)": 0.001, "Time-Weighted Queue": 0.002}, {"Step": 319, "Event Type": "ARRIVAL", "Time (ti)": 444.87, "Customer ID": 160, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 158, "Time Delta (ti - ti-1)": 0.509, "Time-Weighted Queue": 0.509}, {"Step": 320, "Event Type": "DEPARTURE", "Time (ti)": 445.052, "Customer ID": 158, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 158, "Time Delta (ti - ti-1)": 0.182, "Time-Weighted Queue": 0.364}, {"Step": 321, "Event Type": "ARRIVAL", "Time (ti)": 447.26, "Customer ID": 161, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 159, "Time Delta (ti - ti-1)": 2.209, "Time-Weighted Queue": 2.209}, {"Step": 322, "Event Type": "DEPARTURE", "Time (ti)": 448.061, "Customer ID": 159, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 159, "Time Delta (ti - ti-1)": 0.801, "Time-Weighted Queue": 1.601}, {"Step": 323, "Event Type": "DEPARTURE", "Time (ti)": 448.849, "Customer ID": 160, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 160, "Time Delta (ti - ti-1)": 0.788, "Time-Weighted Queue": 0.788}, {"Step": 324, "Event Type": "ARRIVAL", "Time (ti)": 450.499, "Customer ID": 162, "Queue Length (NQi)": 0, "ATM Status": "BUSY", "Customer at ATM": 161, "Time Delta (ti - ti-1)": 1.649, "Time-Weighted Queue": 0.0}, {"Step": 325, "Event Type": "ARRIVAL", "Time (ti)": 454.516, "Customer ID": 163, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 161, "Time Delta (ti - ti-1)": 4.017, "Time-Weighted Queue": 4.017}, {"Step": 326, "Event Type": "DEPARTURE", "Time (ti)": 456.285, "Customer ID": 161, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 161, "Time Delta (ti - ti-1)": 1.769, "Time-Weighted Queue": 3.538}, {"Step": 327, "Event Type": "ARRIVAL", "Time (ti)": 456.94, "Customer ID": 164, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 162, "Time Delta (ti - ti-1)": 0.656, "Time-Weighted Queue": 0.656}, {"Step": 328, "Event Type": "DEPARTURE", "Time (ti)": 458.555, "Customer ID": 162, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 162, "Time Delta (ti - ti-1)": 1.615, "Time-Weighted Queue": 3.23}, {"Step": 329, "Event Type": "ARRIVAL", "Time (ti)": 458.572, "Customer ID": 165, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 163, "Time Delta (ti - ti-1)": 0.017, "Time-Weighted Queue": 0.017}, {"Step": 330, "Event Type": "DEPARTURE", "Time (ti)": 459.238, "Customer ID": 163, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 163, "Time Delta (ti - ti-1)": 0.666, "Time-Weighted Queue": 1.332}, {"Step": 331, "Event Type": "ARRIVAL", "Time (ti)": 459.892, "Customer ID": 166, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 164, "Time Delta (ti - ti-1)": 0.654, "Time-Weighted Queue": 0.654}, {"Step": 332, "Event Type": "ARRIVAL", "Time (ti)": 459.936, "Customer ID": 167, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 164, "Time Delta (ti - ti-1)": 0.043, "Time-Weighted Queue": 0.087}, {"Step": 333, "Event Type": "ARRIVAL", "Time (ti)": 460.306, "Customer ID": 168, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 164, "Time Delta (ti - ti-1)": 0.37, "Time-Weighted Queue": 1.11}, {"Step": 334, "Event Type": "ARRIVAL", "Time (ti)": 460.447, "Customer ID": 169, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 164, "Time Delta (ti - ti-1)": 0.141, "Time-Weighted Queue": 0.565}, {"Step": 335, "Event Type": "ARRIVAL", "Time (ti)": 460.572, "Customer ID": 170, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 164, "Time Delta (ti - ti-1)": 0.125, "Time-Weighted Queue": 0.624}, {"Step": 336, "Event Type": "DEPARTURE", "Time (ti)": 462.642, "Customer ID": 164, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 164, "Time Delta (ti - ti-1)": 2.07, "Time-Weighted Queue": 12.419}, {"Step": 337, "Event Type": "DEPARTURE", "Time (ti)": 465.561, "Customer ID": 165, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 165, "Time Delta (ti - ti-1)": 2.919, "Time-Weighted Queue": 14.595}, {"Step": 338, "Event Type": "ARRIVAL", "Time (ti)": 466.375, "Customer ID": 171, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 166, "Time Delta (ti - ti-1)": 0.814, "Time-Weighted Queue": 3.255}, {"Step": 339, "Event Type": "ARRIVAL", "Time (ti)": 466.684, "Customer ID": 172, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 166, "Time Delta (ti - ti-1)": 0.309, "Time-Weighted Queue": 1.544}, {"Step": 340, "Event Type": "DEPARTURE", "Time (ti)": 467.104, "Customer ID": 166, "Queue Length (NQi)": 6, "ATM Status": "BUSY", "Customer at ATM": 166, "Time Delta (ti - ti-1)": 0.42, "Time-Weighted Queue": 2.52}, {"Step": 341, "Event Type": "DEPARTURE", "Time (ti)": 468.643, "Customer ID": 167, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 167, "Time Delta (ti - ti-1)": 1.539, "Time-Weighted Queue": 7.697}, {"Step": 342, "Event Type": "ARRIVAL", "Time (ti)": 468.713, "Customer ID": 173, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 168, "Time Delta (ti - ti-1)": 0.07, "Time-Weighted Queue": 0.28}, {"Step": 343, "Event Type": "DEPARTURE", "Time (ti)": 469.1, "Customer ID": 168, "Queue Length (NQi)": 5, "ATM Status": "BUSY", "Customer at ATM": 168, "Time Delta (ti - ti-1)": 0.386, "Time-Weighted Queue": 1.932}, {"Step": 344, "Event Type": "DEPARTURE", "Time (ti)": 470.32, "Customer ID": 169, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 169, "Time Delta (ti - ti-1)": 1.22, "Time-Weighted Queue": 4.88}, {"Step": 345, "Event Type": "ARRIVAL", "Time (ti)": 470.42, "Customer ID": 174, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 170, "Time Delta (ti - ti-1)": 0.1, "Time-Weighted Queue": 0.301}, {"Step": 346, "Event Type": "DEPARTURE", "Time (ti)": 472.616, "Customer ID": 170, "Queue Length (NQi)": 4, "ATM Status": "BUSY", "Customer at ATM": 170, "Time Delta (ti - ti-1)": 2.196, "Time-Weighted Queue": 8.784}, {"Step": 347, "Event Type": "DEPARTURE", "Time (ti)": 472.727, "Customer ID": 171, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 171, "Time Delta (ti - ti-1)": 0.111, "Time-Weighted Queue": 0.334}, {"Step": 348, "Event Type": "ARRIVAL", "Time (ti)": 473.444, "Customer ID": 175, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 172, "Time Delta (ti - ti-1)": 0.717, "Time-Weighted Queue": 1.434}, {"Step": 349, "Event Type": "DEPARTURE", "Time (ti)": 473.854, "Customer ID": 172, "Queue Length (NQi)": 3, "ATM Status": "BUSY", "Customer at ATM": 172, "Time Delta (ti - ti-1)": 0.409, "Time-Weighted Queue": 1.228}, {"Step": 350, "Event Type": "DEPARTURE", "Time (ti)": 475.532, "Customer ID": 173, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 173, "Time Delta (ti - ti-1)": 1.679, "Time-Weighted Queue": 3.357}, {"Step": 351, "Event Type": "ARRIVAL", "Time (ti)": 476.394, "Customer ID": 176, "Queue Length (NQi)": 1, "ATM Status": "BUSY", "Customer at ATM": 174, "Time Delta (ti - ti-1)": 0.861, "Time-Weighted Queue": 0.861}, {"Step": 352, "Event Type": "ARRIVAL", "Time (ti)": 479.618, "Customer ID": 177, "Queue Length (NQi)": 2, "ATM Status": "BUSY", "Customer at ATM": 174, "Time Delta (ti - ti-1)": 3.225, "Time-Weighted Queue": 6.45}];
+        const customerData = [{"Customer ID": 0, "Arrival Time": 1.408, "Service Start": 1.408, "Service End": 8.632, "Wait Time": 0.0, "Service Time": 7.224, "Time in System": 7.224}, {"Customer ID": 1, "Arrival Time": 5.358, "Service Start": 8.632, "Service End": 8.776, "Wait Time": 3.274, "Service Time": 0.144, "Time in System": 3.418}, {"Customer ID": 2, "Arrival Time": 8.097, "Service Start": 8.776, "Service End": 13.603, "Wait Time": 0.679, "Service Time": 4.827, "Time in System": 5.506}, {"Customer ID": 3, "Arrival Time": 8.606, "Service Start": 13.603, "Service End": 13.653, "Wait Time": 4.997, "Service Time": 0.05, "Time in System": 5.047}, {"Customer ID": 4, "Arrival Time": 9.115, "Service Start": 13.653, "Service End": 22.061, "Wait Time": 4.538, "Service Time": 8.409, "Time in System": 12.947}, {"Customer ID": 5, "Arrival Time": 11.872, "Service Start": 22.061, "Service End": 22.547, "Wait Time": 10.189, "Service Time": 0.486, "Time in System": 10.676}, {"Customer ID": 6, "Arrival Time": 15.566, "Service Start": 22.547, "Service End": 24.333, "Wait Time": 6.982, "Service Time": 1.785, "Time in System": 8.767}, {"Customer ID": 7, "Arrival Time": 20.925, "Service Start": 24.333, "Service End": 25.159, "Wait Time": 3.408, "Service Time": 0.826, "Time in System": 4.234}, {"Customer ID": 8, "Arrival Time": 21.641, "Service Start": 25.159, "Service End": 25.52, "Wait Time": 3.518, "Service Time": 0.361, "Time in System": 3.879}, {"Customer ID": 9, "Arrival Time": 22.243, "Service Start": 25.52, "Service End": 26.349, "Wait Time": 3.277, "Service Time": 0.829, "Time in System": 4.106}, {"Customer ID": 10, "Arrival Time": 23.331, "Service Start": 26.349, "Service End": 27.444, "Wait Time": 3.018, "Service Time": 1.095, "Time in System": 4.113}, {"Customer ID": 11, "Arrival Time": 25.028, "Service Start": 27.444, "Service End": 28.905, "Wait Time": 2.416, "Service Time": 1.461, "Time in System": 3.877}, {"Customer ID": 12, "Arrival Time": 27.867, "Service Start": 28.905, "Service End": 29.44, "Wait Time": 1.038, "Service Time": 0.535, "Time in System": 1.573}, {"Customer ID": 13, "Arrival Time": 32.481, "Service Start": 32.481, "Service End": 34.214, "Wait Time": 0.0, "Service Time": 1.733, "Time in System": 1.733}, {"Customer ID": 14, "Arrival Time": 35.173, "Service Start": 35.173, "Service End": 35.287, "Wait Time": 0.0, "Service Time": 0.114, "Time in System": 0.114}, {"Customer ID": 15, "Arrival Time": 37.979, "Service Start": 37.979, "Service End": 38.428, "Wait Time": 0.0, "Service Time": 0.449, "Time in System": 0.449}, {"Customer ID": 16, "Arrival Time": 38.181, "Service Start": 38.428, "Service End": 46.517, "Wait Time": 0.247, "Service Time": 8.09, "Time in System": 8.336}, {"Customer ID": 17, "Arrival Time": 47.102, "Service Start": 47.102, "Service End": 51.068, "Wait Time": 0.0, "Service Time": 3.966, "Time in System": 3.966}, {"Customer ID": 18, "Arrival Time": 48.192, "Service Start": 51.068, "Service End": 52.46, "Wait Time": 2.876, "Service Time": 1.392, "Time in System": 4.268}, {"Customer ID": 19, "Arrival Time": 48.5, "Service Start": 52.46, "Service End": 52.544, "Wait Time": 3.96, "Service Time": 0.084, "Time in System": 4.044}, {"Customer ID": 20, "Arrival Time": 51.959, "Service Start": 52.544, "Service End": 58.305, "Wait Time": 0.585, "Service Time": 5.761, "Time in System": 6.346}, {"Customer ID": 21, "Arrival Time": 52.349, "Service Start": 58.305, "Service End": 59.201, "Wait Time": 5.956, "Service Time": 0.897, "Time in System": 6.852}, {"Customer ID": 22, "Arrival Time": 54.4, "Service Start": 59.201, "Service End": 61.1, "Wait Time": 4.802, "Service Time": 1.899, "Time in System": 6.701}, {"Customer ID": 23, "Arrival Time": 55.298, "Service Start": 61.1, "Service End": 69.483, "Wait Time": 5.802, "Service Time": 8.383, "Time in System": 14.185}, {"Customer ID": 24, "Arrival Time": 58.557, "Service Start": 69.483, "Service End": 74.888, "Wait Time": 10.926, "Service Time": 5.405, "Time in System": 16.331}, {"Customer ID": 25, "Arrival Time": 60.759, "Service Start": 74.888, "Service End": 81.007, "Wait Time": 14.129, "Service Time": 6.119, "Time in System": 20.248}, {"Customer ID": 26, "Arrival Time": 61.372, "Service Start": 81.007, "Service End": 85.242, "Wait Time": 19.635, "Service Time": 4.235, "Time in System": 23.87}, {"Customer ID": 27, "Arrival Time": 65.849, "Service Start": 85.242, "Service End": 85.606, "Wait Time": 19.393, "Service Time": 0.365, "Time in System": 19.757}, {"Customer ID": 28, "Arrival Time": 74.264, "Service Start": 85.606, "Service End": 89.496, "Wait Time": 11.342, "Service Time": 3.889, "Time in System": 15.231}, {"Customer ID": 29, "Arrival Time": 76.997, "Service Start": 89.496, "Service End": 93.046, "Wait Time": 12.498, "Service Time": 3.551, "Time in System": 16.049}, {"Customer ID": 30, "Arrival Time": 77.275, "Service Start": 93.046, "Service End": 93.578, "Wait Time": 15.771, "Service Time": 0.532, "Time in System": 16.303}, {"Customer ID": 31, "Arrival Time": 77.93, "Service Start": 93.578, "Service End": 93.591, "Wait Time": 15.648, "Service Time": 0.013, "Time in System": 15.661}, {"Customer ID": 32, "Arrival Time": 78.069, "Service Start": 93.591, "Service End": 97.647, "Wait Time": 15.523, "Service Time": 4.056, "Time in System": 19.578}, {"Customer ID": 33, "Arrival Time": 79.249, "Service Start": 97.647, "Service End": 100.592, "Wait Time": 18.398, "Service Time": 2.945, "Time in System": 21.343}, {"Customer ID": 34, "Arrival Time": 80.726, "Service Start": 100.592, "Service End": 104.133, "Wait Time": 19.866, "Service Time": 3.541, "Time in System": 23.407}, {"Customer ID": 35, "Arrival Time": 81.675, "Service Start": 104.133, "Service End": 104.428, "Wait Time": 22.457, "Service Time": 0.296, "Time in System": 22.753}, {"Customer ID": 36, "Arrival Time": 82.999, "Service Start": 104.428, "Service End": 109.201, "Wait Time": 21.429, "Service Time": 4.772, "Time in System": 26.202}, {"Customer ID": 37, "Arrival Time": 83.988, "Service Start": 109.201, "Service End": 110.095, "Wait Time": 25.212, "Service Time": 0.894, "Time in System": 26.106}, {"Customer ID": 38, "Arrival Time": 86.336, "Service Start": 110.095, "Service End": 113.233, "Wait Time": 23.759, "Service Time": 3.139, "Time in System": 26.898}, {"Customer ID": 39, "Arrival Time": 86.568, "Service Start": 113.233, "Service End": 118.471, "Wait Time": 26.665, "Service Time": 5.237, "Time in System": 31.903}, {"Customer ID": 40, "Arrival Time": 99.571, "Service Start": 118.471, "Service End": 121.904, "Wait Time": 18.9, "Service Time": 3.433, "Time in System": 22.333}, {"Customer ID": 41, "Arrival Time": 103.487, "Service Start": 121.904, "Service End": 125.441, "Wait Time": 18.416, "Service Time": 3.537, "Time in System": 21.954}, {"Customer ID": 42, "Arrival Time": 103.718, "Service Start": 125.441, "Service End": 126.78, "Wait Time": 21.723, "Service Time": 1.339, "Time in System": 23.062}, {"Customer ID": 43, "Arrival Time": 105.05, "Service Start": 126.78, "Service End": 126.857, "Wait Time": 21.73, "Service Time": 0.077, "Time in System": 21.807}, {"Customer ID": 44, "Arrival Time": 107.979, "Service Start": 126.857, "Service End": 127.762, "Wait Time": 18.878, "Service Time": 0.906, "Time in System": 19.783}, {"Customer ID": 45, "Arrival Time": 109.184, "Service Start": 127.762, "Service End": 129.467, "Wait Time": 18.578, "Service Time": 1.705, "Time in System": 20.283}, {"Customer ID": 46, "Arrival Time": 109.381, "Service Start": 129.467, "Service End": 135.182, "Wait Time": 20.086, "Service Time": 5.715, "Time in System": 25.801}, {"Customer ID": 47, "Arrival Time": 110.561, "Service Start": 135.182, "Service End": 135.806, "Wait Time": 24.621, "Service Time": 0.624, "Time in System": 25.245}, {"Customer ID": 48, "Arrival Time": 113.606, "Service Start": 135.806, "Service End": 135.998, "Wait Time": 22.2, "Service Time": 0.192, "Time in System": 22.392}, {"Customer ID": 49, "Arrival Time": 115.523, "Service Start": 135.998, "Service End": 136.819, "Wait Time": 20.475, "Service Time": 0.821, "Time in System": 21.296}, {"Customer ID": 50, "Arrival Time": 115.905, "Service Start": 136.819, "Service End": 143.191, "Wait Time": 20.914, "Service Time": 6.372, "Time in System": 27.286}, {"Customer ID": 51, "Arrival Time": 119.653, "Service Start": 143.191, "Service End": 148.115, "Wait Time": 23.539, "Service Time": 4.924, "Time in System": 28.462}, {"Customer ID": 52, "Arrival Time": 122.124, "Service Start": 148.115, "Service End": 148.61, "Wait Time": 25.991, "Service Time": 0.496, "Time in System": 26.486}, {"Customer ID": 53, "Arrival Time": 124.167, "Service Start": 148.61, "Service End": 153.964, "Wait Time": 24.444, "Service Time": 5.354, "Time in System": 29.798}, {"Customer ID": 54, "Arrival Time": 126.386, "Service Start": 153.964, "Service End": 159.399, "Wait Time": 27.579, "Service Time": 5.434, "Time in System": 33.013}, {"Customer ID": 55, "Arrival Time": 126.463, "Service Start": 159.399, "Service End": 160.736, "Wait Time": 32.936, "Service Time": 1.337, "Time in System": 34.272}, {"Customer ID": 56, "Arrival Time": 126.806, "Service Start": 160.736, "Service End": 165.467, "Wait Time": 33.93, "Service Time": 4.731, "Time in System": 38.661}, {"Customer ID": 57, "Arrival Time": 129.841, "Service Start": 165.467, "Service End": 166.763, "Wait Time": 35.626, "Service Time": 1.297, "Time in System": 36.923}, {"Customer ID": 58, "Arrival Time": 130.701, "Service Start": 166.763, "Service End": 167.07, "Wait Time": 36.062, "Service Time": 0.306, "Time in System": 36.369}, {"Customer ID": 59, "Arrival Time": 132.286, "Service Start": 167.07, "Service End": 168.058, "Wait Time": 34.784, "Service Time": 0.989, "Time in System": 35.773}, {"Customer ID": 60, "Arrival Time": 136.512, "Service Start": 168.058, "Service End": 168.995, "Wait Time": 31.546, "Service Time": 0.937, "Time in System": 32.483}, {"Customer ID": 61, "Arrival Time": 137.039, "Service Start": 168.995, "Service End": 170.751, "Wait Time": 31.956, "Service Time": 1.755, "Time in System": 33.711}, {"Customer ID": 62, "Arrival Time": 141.992, "Service Start": 170.751, "Service End": 173.665, "Wait Time": 28.759, "Service Time": 2.914, "Time in System": 31.673}, {"Customer ID": 63, "Arrival Time": 145.003, "Service Start": 173.665, "Service End": 174.749, "Wait Time": 28.662, "Service Time": 1.085, "Time in System": 29.747}, {"Customer ID": 64, "Arrival Time": 149.886, "Service Start": 174.749, "Service End": 183.312, "Wait Time": 24.863, "Service Time": 8.563, "Time in System": 33.426}, {"Customer ID": 65, "Arrival Time": 152.212, "Service Start": 183.312, "Service End": 184.008, "Wait Time": 31.1, "Service Time": 0.696, "Time in System": 31.796}, {"Customer ID": 66, "Arrival Time": 157.154, "Service Start": 184.008, "Service End": 185.659, "Wait Time": 26.854, "Service Time": 1.65, "Time in System": 28.505}, {"Customer ID": 67, "Arrival Time": 158.302, "Service Start": 185.659, "Service End": 186.518, "Wait Time": 27.357, "Service Time": 0.859, "Time in System": 28.216}, {"Customer ID": 68, "Arrival Time": 158.652, "Service Start": 186.518, "Service End": 186.608, "Wait Time": 27.866, "Service Time": 0.09, "Time in System": 27.956}, {"Customer ID": 69, "Arrival Time": 159.428, "Service Start": 186.608, "Service End": 188.865, "Wait Time": 27.18, "Service Time": 2.257, "Time in System": 29.437}, {"Customer ID": 70, "Arrival Time": 164.539, "Service Start": 188.865, "Service End": 188.992, "Wait Time": 24.326, "Service Time": 0.127, "Time in System": 24.453}, {"Customer ID": 71, "Arrival Time": 164.56, "Service Start": 188.992, "Service End": 189.776, "Wait Time": 24.432, "Service Time": 0.784, "Time in System": 25.215}, {"Customer ID": 72, "Arrival Time": 166.705, "Service Start": 189.776, "Service End": 190.433, "Wait Time": 23.071, "Service Time": 0.657, "Time in System": 23.728}, {"Customer ID": 73, "Arrival Time": 167.458, "Service Start": 190.433, "Service End": 190.809, "Wait Time": 22.975, "Service Time": 0.376, "Time in System": 23.35}, {"Customer ID": 74, "Arrival Time": 176.048, "Service Start": 190.809, "Service End": 192.422, "Wait Time": 14.761, "Service Time": 1.613, "Time in System": 16.374}, {"Customer ID": 75, "Arrival Time": 185.894, "Service Start": 192.422, "Service End": 202.608, "Wait Time": 6.528, "Service Time": 10.186, "Time in System": 16.714}, {"Customer ID": 76, "Arrival Time": 186.9, "Service Start": 202.608, "Service End": 203.259, "Wait Time": 15.708, "Service Time": 0.651, "Time in System": 16.359}, {"Customer ID": 77, "Arrival Time": 188.995, "Service Start": 203.259, "Service End": 206.386, "Wait Time": 14.264, "Service Time": 3.127, "Time in System": 17.391}, {"Customer ID": 78, "Arrival Time": 196.162, "Service Start": 206.386, "Service End": 208.795, "Wait Time": 10.224, "Service Time": 2.409, "Time in System": 12.633}, {"Customer ID": 79, "Arrival Time": 196.993, "Service Start": 208.795, "Service End": 210.637, "Wait Time": 11.802, "Service Time": 1.842, "Time in System": 13.643}, {"Customer ID": 80, "Arrival Time": 200.339, "Service Start": 210.637, "Service End": 211.565, "Wait Time": 10.298, "Service Time": 0.928, "Time in System": 11.226}, {"Customer ID": 81, "Arrival Time": 204.64, "Service Start": 211.565, "Service End": 212.06, "Wait Time": 6.925, "Service Time": 0.495, "Time in System": 7.42}, {"Customer ID": 82, "Arrival Time": 206.016, "Service Start": 212.06, "Service End": 212.16, "Wait Time": 6.045, "Service Time": 0.1, "Time in System": 6.144}, {"Customer ID": 83, "Arrival Time": 209.017, "Service Start": 212.16, "Service End": 214.305, "Wait Time": 3.143, "Service Time": 2.145, "Time in System": 5.288}, {"Customer ID": 84, "Arrival Time": 209.301, "Service Start": 214.305, "Service End": 217.022, "Wait Time": 5.004, "Service Time": 2.716, "Time in System": 7.721}, {"Customer ID": 85, "Arrival Time": 214.712, "Service Start": 217.022, "Service End": 219.508, "Wait Time": 2.31, "Service Time": 2.487, "Time in System": 4.796}, {"Customer ID": 86, "Arrival Time": 214.762, "Service Start": 219.508, "Service End": 220.682, "Wait Time": 4.746, "Service Time": 1.174, "Time in System": 5.92}, {"Customer ID": 87, "Arrival Time": 216.915, "Service Start": 220.682, "Service End": 227.307, "Wait Time": 3.767, "Service Time": 6.625, "Time in System": 10.392}, {"Customer ID": 88, "Arrival Time": 217.686, "Service Start": 227.307, "Service End": 232.343, "Wait Time": 9.621, "Service Time": 5.036, "Time in System": 14.657}, {"Customer ID": 89, "Arrival Time": 218.261, "Service Start": 232.343, "Service End": 234.932, "Wait Time": 14.082, "Service Time": 2.589, "Time in System": 16.671}, {"Customer ID": 90, "Arrival Time": 221.783, "Service Start": 234.932, "Service End": 236.876, "Wait Time": 13.149, "Service Time": 1.944, "Time in System": 15.093}, {"Customer ID": 91, "Arrival Time": 222.227, "Service Start": 236.876, "Service End": 238.686, "Wait Time": 14.649, "Service Time": 1.81, "Time in System": 16.459}, {"Customer ID": 92, "Arrival Time": 223.478, "Service Start": 238.686, "Service End": 244.147, "Wait Time": 15.208, "Service Time": 5.46, "Time in System": 20.668}, {"Customer ID": 93, "Arrival Time": 223.84, "Service Start": 244.147, "Service End": 246.553, "Wait Time": 20.307, "Service Time": 2.406, "Time in System": 22.713}, {"Customer ID": 94, "Arrival Time": 231.598, "Service Start": 246.553, "Service End": 247.584, "Wait Time": 14.955, "Service Time": 1.031, "Time in System": 15.986}, {"Customer ID": 95, "Arrival Time": 232.493, "Service Start": 247.584, "Service End": 253.042, "Wait Time": 15.091, "Service Time": 5.458, "Time in System": 20.549}, {"Customer ID": 96, "Arrival Time": 237.592, "Service Start": 253.042, "Service End": 256.674, "Wait Time": 15.45, "Service Time": 3.633, "Time in System": 19.083}, {"Customer ID": 97, "Arrival Time": 238.422, "Service Start": 256.674, "Service End": 259.14, "Wait Time": 18.252, "Service Time": 2.466, "Time in System": 20.718}, {"Customer ID": 98, "Arrival Time": 238.716, "Service Start": 259.14, "Service End": 261.378, "Wait Time": 20.424, "Service Time": 2.238, "Time in System": 22.662}, {"Customer ID": 99, "Arrival Time": 245.636, "Service Start": 261.378, "Service End": 261.4, "Wait Time": 15.742, "Service Time": 0.022, "Time in System": 15.764}, {"Customer ID": 100, "Arrival Time": 246.878, "Service Start": 261.4, "Service End": 261.657, "Wait Time": 14.522, "Service Time": 0.257, "Time in System": 14.779}, {"Customer ID": 101, "Arrival Time": 250.761, "Service Start": 261.657, "Service End": 264.271, "Wait Time": 10.896, "Service Time": 2.614, "Time in System": 13.51}, {"Customer ID": 102, "Arrival Time": 257.305, "Service Start": 264.271, "Service End": 264.283, "Wait Time": 6.966, "Service Time": 0.012, "Time in System": 6.978}, {"Customer ID": 103, "Arrival Time": 257.568, "Service Start": 264.283, "Service End": 264.704, "Wait Time": 6.715, "Service Time": 0.421, "Time in System": 7.135}, {"Customer ID": 104, "Arrival Time": 258.097, "Service Start": 264.704, "Service End": 266.614, "Wait Time": 6.607, "Service Time": 1.91, "Time in System": 8.516}, {"Customer ID": 105, "Arrival Time": 264.962, "Service Start": 266.614, "Service End": 269.147, "Wait Time": 1.652, "Service Time": 2.533, "Time in System": 4.185}, {"Customer ID": 106, "Arrival Time": 268.494, "Service Start": 269.147, "Service End": 272.136, "Wait Time": 0.653, "Service Time": 2.989, "Time in System": 3.642}, {"Customer ID": 107, "Arrival Time": 269.256, "Service Start": 272.136, "Service End": 274.653, "Wait Time": 2.88, "Service Time": 2.517, "Time in System": 5.397}, {"Customer ID": 108, "Arrival Time": 270.068, "Service Start": 274.653, "Service End": 279.193, "Wait Time": 4.584, "Service Time": 4.541, "Time in System": 9.125}, {"Customer ID": 109, "Arrival Time": 271.249, "Service Start": 279.193, "Service End": 279.429, "Wait Time": 7.944, "Service Time": 0.236, "Time in System": 8.18}, {"Customer ID": 110, "Arrival Time": 275.366, "Service Start": 279.429, "Service End": 280.53, "Wait Time": 4.063, "Service Time": 1.1, "Time in System": 5.163}, {"Customer ID": 111, "Arrival Time": 278.582, "Service Start": 280.53, "Service End": 281.269, "Wait Time": 1.948, "Service Time": 0.74, "Time in System": 2.688}, {"Customer ID": 112, "Arrival Time": 281.102, "Service Start": 281.269, "Service End": 289.939, "Wait Time": 0.167, "Service Time": 8.67, "Time in System": 8.837}, {"Customer ID": 113, "Arrival Time": 281.941, "Service Start": 289.939, "Service End": 292.332, "Wait Time": 7.998, "Service Time": 2.394, "Time in System": 10.391}, {"Customer ID": 114, "Arrival Time": 283.439, "Service Start": 292.332, "Service End": 294.009, "Wait Time": 8.893, "Service Time": 1.676, "Time in System": 10.57}, {"Customer ID": 115, "Arrival Time": 290.117, "Service Start": 294.009, "Service End": 296.073, "Wait Time": 3.891, "Service Time": 2.064, "Time in System": 5.956}, {"Customer ID": 116, "Arrival Time": 294.869, "Service Start": 296.073, "Service End": 296.594, "Wait Time": 1.204, "Service Time": 0.521, "Time in System": 1.726}, {"Customer ID": 117, "Arrival Time": 296.904, "Service Start": 296.904, "Service End": 299.98, "Wait Time": 0.0, "Service Time": 3.076, "Time in System": 3.076}, {"Customer ID": 118, "Arrival Time": 297.892, "Service Start": 299.98, "Service End": 300.448, "Wait Time": 2.087, "Service Time": 0.468, "Time in System": 2.555}, {"Customer ID": 119, "Arrival Time": 297.966, "Service Start": 300.448, "Service End": 307.218, "Wait Time": 2.481, "Service Time": 6.771, "Time in System": 9.252}, {"Customer ID": 120, "Arrival Time": 301.077, "Service Start": 307.218, "Service End": 313.131, "Wait Time": 6.141, "Service Time": 5.912, "Time in System": 12.054}, {"Customer ID": 121, "Arrival Time": 310.31, "Service Start": 313.131, "Service End": 314.472, "Wait Time": 2.821, "Service Time": 1.341, "Time in System": 4.162}, {"Customer ID": 122, "Arrival Time": 311.697, "Service Start": 314.472, "Service End": 322.634, "Wait Time": 2.776, "Service Time": 8.162, "Time in System": 10.938}, {"Customer ID": 123, "Arrival Time": 311.743, "Service Start": 322.634, "Service End": 327.236, "Wait Time": 10.891, "Service Time": 4.602, "Time in System": 15.493}, {"Customer ID": 124, "Arrival Time": 319.65, "Service Start": 327.236, "Service End": 328.073, "Wait Time": 7.586, "Service Time": 0.837, "Time in System": 8.423}, {"Customer ID": 125, "Arrival Time": 329.591, "Service Start": 329.591, "Service End": 330.758, "Wait Time": 0.0, "Service Time": 1.167, "Time in System": 1.167}, {"Customer ID": 126, "Arrival Time": 335.305, "Service Start": 335.305, "Service End": 336.22, "Wait Time": 0.0, "Service Time": 0.915, "Time in System": 0.915}, {"Customer ID": 127, "Arrival Time": 335.863, "Service Start": 336.22, "Service End": 342.823, "Wait Time": 0.358, "Service Time": 6.603, "Time in System": 6.961}, {"Customer ID": 128, "Arrival Time": 338.304, "Service Start": 342.823, "Service End": 343.069, "Wait Time": 4.519, "Service Time": 0.245, "Time in System": 4.765}, {"Customer ID": 129, "Arrival Time": 341.876, "Service Start": 343.069, "Service End": 345.359, "Wait Time": 1.192, "Service Time": 2.291, "Time in System": 3.483}, {"Customer ID": 130, "Arrival Time": 344.409, "Service Start": 345.359, "Service End": 345.722, "Wait Time": 0.951, "Service Time": 0.362, "Time in System": 1.313}, {"Customer ID": 131, "Arrival Time": 358.24, "Service Start": 358.24, "Service End": 359.993, "Wait Time": 0.0, "Service Time": 1.753, "Time in System": 1.753}, {"Customer ID": 132, "Arrival Time": 364.536, "Service Start": 364.536, "Service End": 367.776, "Wait Time": 0.0, "Service Time": 3.24, "Time in System": 3.24}, {"Customer ID": 133, "Arrival Time": 368.118, "Service Start": 368.118, "Service End": 371.028, "Wait Time": 0.0, "Service Time": 2.909, "Time in System": 2.909}, {"Customer ID": 134, "Arrival Time": 369.455, "Service Start": 371.028, "Service End": 375.015, "Wait Time": 1.573, "Service Time": 3.987, "Time in System": 5.56}, {"Customer ID": 135, "Arrival Time": 370.497, "Service Start": 375.015, "Service End": 379.858, "Wait Time": 4.518, "Service Time": 4.843, "Time in System": 9.361}, {"Customer ID": 136, "Arrival Time": 375.47, "Service Start": 379.858, "Service End": 381.577, "Wait Time": 4.388, "Service Time": 1.719, "Time in System": 6.107}, {"Customer ID": 137, "Arrival Time": 382.803, "Service Start": 382.803, "Service End": 384.474, "Wait Time": 0.0, "Service Time": 1.671, "Time in System": 1.671}, {"Customer ID": 138, "Arrival Time": 387.606, "Service Start": 387.606, "Service End": 390.126, "Wait Time": 0.0, "Service Time": 2.519, "Time in System": 2.519}, {"Customer ID": 139, "Arrival Time": 391.238, "Service Start": 391.238, "Service End": 395.051, "Wait Time": 0.0, "Service Time": 3.813, "Time in System": 3.813}, {"Customer ID": 140, "Arrival Time": 397.86, "Service Start": 397.86, "Service End": 398.85, "Wait Time": 0.0, "Service Time": 0.99, "Time in System": 0.99}, {"Customer ID": 141, "Arrival Time": 399.273, "Service Start": 399.273, "Service End": 399.51, "Wait Time": 0.0, "Service Time": 0.237, "Time in System": 0.237}, {"Customer ID": 142, "Arrival Time": 401.863, "Service Start": 401.863, "Service End": 401.951, "Wait Time": 0.0, "Service Time": 0.088, "Time in System": 0.088}, {"Customer ID": 143, "Arrival Time": 403.743, "Service Start": 403.743, "Service End": 405.62, "Wait Time": 0.0, "Service Time": 1.878, "Time in System": 1.878}, {"Customer ID": 144, "Arrival Time": 404.756, "Service Start": 405.62, "Service End": 405.695, "Wait Time": 0.865, "Service Time": 0.074, "Time in System": 0.939}, {"Customer ID": 145, "Arrival Time": 407.437, "Service Start": 407.437, "Service End": 407.528, "Wait Time": 0.0, "Service Time": 0.091, "Time in System": 0.091}, {"Customer ID": 146, "Arrival Time": 412.625, "Service Start": 412.625, "Service End": 413.696, "Wait Time": 0.0, "Service Time": 1.072, "Time in System": 1.072}, {"Customer ID": 147, "Arrival Time": 413.032, "Service Start": 413.696, "Service End": 417.224, "Wait Time": 0.664, "Service Time": 3.527, "Time in System": 4.191}, {"Customer ID": 148, "Arrival Time": 415.248, "Service Start": 417.224, "Service End": 417.438, "Wait Time": 1.975, "Service Time": 0.214, "Time in System": 2.189}, {"Customer ID": 149, "Arrival Time": 415.978, "Service Start": 417.438, "Service End": 417.565, "Wait Time": 1.46, "Service Time": 0.127, "Time in System": 1.587}, {"Customer ID": 150, "Arrival Time": 418.903, "Service Start": 418.903, "Service End": 420.722, "Wait Time": 0.0, "Service Time": 1.819, "Time in System": 1.819}, {"Customer ID": 151, "Arrival Time": 421.237, "Service Start": 421.237, "Service End": 423.672, "Wait Time": 0.0, "Service Time": 2.435, "Time in System": 2.435}, {"Customer ID": 152, "Arrival Time": 425.122, "Service Start": 425.122, "Service End": 434.058, "Wait Time": 0.0, "Service Time": 8.937, "Time in System": 8.937}, {"Customer ID": 153, "Arrival Time": 427.301, "Service Start": 434.058, "Service End": 435.446, "Wait Time": 6.758, "Service Time": 1.387, "Time in System": 8.145}, {"Customer ID": 154, "Arrival Time": 428.471, "Service Start": 435.446, "Service End": 439.784, "Wait Time": 6.975, "Service Time": 4.339, "Time in System": 11.313}, {"Customer ID": 155, "Arrival Time": 433.228, "Service Start": 439.784, "Service End": 442.642, "Wait Time": 6.556, "Service Time": 2.858, "Time in System": 9.414}, {"Customer ID": 156, "Arrival Time": 434.175, "Service Start": 442.642, "Service End": 443.904, "Wait Time": 8.466, "Service Time": 1.262, "Time in System": 9.728}, {"Customer ID": 157, "Arrival Time": 434.42, "Service Start": 443.904, "Service End": 444.361, "Wait Time": 9.483, "Service Time": 0.457, "Time in System": 9.94}, {"Customer ID": 158, "Arrival Time": 434.497, "Service Start": 444.361, "Service End": 445.052, "Wait Time": 9.863, "Service Time": 0.691, "Time in System": 10.554}, {"Customer ID": 159, "Arrival Time": 444.36, "Service Start": 445.052, "Service End": 448.061, "Wait Time": 0.692, "Service Time": 3.009, "Time in System": 3.701}, {"Customer ID": 160, "Arrival Time": 444.87, "Service Start": 448.061, "Service End": 448.849, "Wait Time": 3.191, "Service Time": 0.788, "Time in System": 3.979}, {"Customer ID": 161, "Arrival Time": 447.26, "Service Start": 448.849, "Service End": 456.285, "Wait Time": 1.589, "Service Time": 7.435, "Time in System": 9.024}, {"Customer ID": 162, "Arrival Time": 450.499, "Service Start": 456.285, "Service End": 458.555, "Wait Time": 5.786, "Service Time": 2.27, "Time in System": 8.057}, {"Customer ID": 163, "Arrival Time": 454.516, "Service Start": 458.555, "Service End": 459.238, "Wait Time": 4.04, "Service Time": 0.683, "Time in System": 4.723}, {"Customer ID": 164, "Arrival Time": 456.94, "Service Start": 459.238, "Service End": 462.642, "Wait Time": 2.298, "Service Time": 3.404, "Time in System": 5.702}, {"Customer ID": 165, "Arrival Time": 458.572, "Service Start": 462.642, "Service End": 465.561, "Wait Time": 4.07, "Service Time": 2.919, "Time in System": 6.989}, {"Customer ID": 166, "Arrival Time": 459.892, "Service Start": 465.561, "Service End": 467.104, "Wait Time": 5.669, "Service Time": 1.543, "Time in System": 7.211}, {"Customer ID": 167, "Arrival Time": 459.936, "Service Start": 467.104, "Service End": 468.643, "Wait Time": 7.168, "Service Time": 1.539, "Time in System": 8.707}, {"Customer ID": 168, "Arrival Time": 460.306, "Service Start": 468.643, "Service End": 469.1, "Wait Time": 8.337, "Service Time": 0.456, "Time in System": 8.793}, {"Customer ID": 169, "Arrival Time": 460.447, "Service Start": 469.1, "Service End": 470.32, "Wait Time": 8.652, "Service Time": 1.22, "Time in System": 9.872}, {"Customer ID": 170, "Arrival Time": 460.572, "Service Start": 470.32, "Service End": 472.616, "Wait Time": 9.747, "Service Time": 2.296, "Time in System": 12.044}, {"Customer ID": 171, "Arrival Time": 466.375, "Service Start": 472.616, "Service End": 472.727, "Wait Time": 6.241, "Service Time": 0.111, "Time in System": 6.352}, {"Customer ID": 172, "Arrival Time": 466.684, "Service Start": 472.727, "Service End": 473.854, "Wait Time": 6.043, "Service Time": 1.127, "Time in System": 7.17}, {"Customer ID": 173, "Arrival Time": 468.713, "Service Start": 473.854, "Service End": 475.532, "Wait Time": 5.14, "Service Time": 1.679, "Time in System": 6.819}];
+        const SIMULATION_TIME = 480;
+        const TOTAL_CUSTOMERS = 25;
+        const SIMULATION_MODE = 'WAKTU';
+        
+        let currentStep = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let speed = 1000;
+        let intervalId = null;
+        let totalArrivals = 0;
+        let servedCount = 0;
+        
+        function addEvent(message, isCurrent = false) {
+            const eventLog = document.getElementById('eventLog');
+            const event = document.createElement('div');
+            event.className = isCurrent ? 'event current-event' : 'event';
+            event.innerHTML = message;
+            eventLog.insertBefore(event, eventLog.firstChild);
+            
+            // Limit log to 100 entries
+            if (eventLog.children.length > 100) {
+                eventLog.removeChild(eventLog.lastChild);
+            }
+        }
+        
+        function updateVisualization(step) {
+            const currentTime = step['Time (ti)'];
+            const eventType = step['Event Type'];
+            const customerId = step['Customer ID'];
+            const queueLength = step['Queue Length (NQi)'];
+            const atmStatus = step['ATM Status'];
+            const customerAtATM = step['Customer at ATM'];
+            
+            // Update stats
+            document.getElementById('currentTime').textContent = currentTime.toFixed(2);
+            document.getElementById('queueLength').textContent = queueLength;
+            
+            // Update timeline
+            const progress = (currentTime / SIMULATION_TIME) * 100;
+            document.getElementById('timelineProgress').style.width = Math.min(progress, 100) + '%';
+            document.getElementById('timelineProgress').textContent = Math.min(progress, 100).toFixed(1) + '%';
+            
+            // Update ATM status
+            const atmStatusElement = document.getElementById('atmStatus');
+            if (atmStatus === 'BUSY') {
+                atmStatusElement.textContent = 'BUSY';
+                atmStatusElement.className = 'atm-status busy';
+                document.getElementById('atmScreen').textContent = `Customer #${customerAtATM}`;
+            } else {
+                atmStatusElement.textContent = 'IDLE';
+                atmStatusElement.className = 'atm-status idle';
+                document.getElementById('atmScreen').textContent = 'ATM READY';
+            }
+            
+            // Update queue visualization
+            updateQueueVisualization(queueLength, customerAtATM, atmStatus, currentTime);
+            
+            // Add event to log
+            let eventMessage = `<span class="event-time">[t=${currentTime.toFixed(2)} min]</span> `;
+            
+            if (eventType === 'ARRIVAL') {
+                totalArrivals++;
+                document.getElementById('totalArrivals').textContent = totalArrivals;
+                eventMessage += `<span class="event-arrival">🔵 ARRIVAL</span> - <span class="event-customer">Customer #${customerId}</span> tiba di ATM`;
+                eventMessage += ` | Antrian: ${queueLength} | ATM: ${atmStatus}`;
+                addEvent(eventMessage, true);
+            } else if (eventType === 'DEPARTURE') {
+                servedCount++;
+                document.getElementById('servedCount').textContent = servedCount;
+                eventMessage += `<span class="event-departure">🔴 DEPARTURE</span> - <span class="event-customer">Customer #${customerId}</span> selesai dilayani`;
+                eventMessage += ` | Antrian: ${queueLength} | ATM: ${atmStatus}`;
+                addEvent(eventMessage, true);
+            }
+        }
+        
+        function updateQueueVisualization(queueLength, customerAtATM, atmStatus, currentTime) {
+            const queueLine = document.getElementById('queueLine');
+            queueLine.innerHTML = '';
+            
+            // Show customer being served
+            if (atmStatus === 'BUSY' && customerAtATM !== '-') {
+                const servingCustomer = document.createElement('div');
+                servingCustomer.className = 'customer serving';
+                servingCustomer.textContent = customerAtATM;
+                servingCustomer.setAttribute('data-info', `Being Served`);
+                servingCustomer.title = `Customer #${customerAtATM} - Being Served`;
+                queueLine.appendChild(servingCustomer);
+            }
+            
+            // Show customers waiting in queue
+            if (queueLength > 0) {
+                for (let i = 0; i < queueLength; i++) {
+                    const customer = document.createElement('div');
+                    customer.className = 'customer waiting';
+                    customer.textContent = '?';
+                    customer.setAttribute('data-info', `Position ${i + 1}`);
+                    customer.title = `Waiting - Position ${i + 1}`;
+                    queueLine.appendChild(customer);
+                }
+            } else if (atmStatus === 'IDLE') {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.color = '#999';
+                emptyMsg.style.fontStyle = 'italic';
+                emptyMsg.style.padding = '20px';
+                emptyMsg.textContent = 'Antrian kosong';
+                queueLine.appendChild(emptyMsg);
+            }
+        }
+        
+        function processNextStep() {
+            if (currentStep >= simulationSteps.length) {
+                stopSimulation();
+                addEvent('<span class="event-action">✅ SIMULASI SELESAI! Semua ${TOTAL_CUSTOMERS} pelanggan telah diproses.</span>', true);
+                
+                // Calculate and display final statistics
+                calculateFinalStatistics();
+                
+                return;
+            }
+            
+            const step = simulationSteps[currentStep];
+            updateVisualization(step);
+            currentStep++;
+        }
+        
+        function calculateFinalStatistics() {
+            let totalWait = 0;
+            let count = 0;
+            
+            customerData.forEach(cust => {
+                totalWait += cust['Wait Time'];
+                count++;
+            });
+            
+            const avgWait = count > 0 ? totalWait / count : 0;
+            
+            // Calculate time-weighted average queue length
+            let totalTimeWeighted = 0;
+            simulationSteps.forEach(step => {
+                totalTimeWeighted += step['Time-Weighted Queue'];
+            });
+            
+            const lastTime = simulationSteps[simulationSteps.length - 1]['Time (ti)'];
+            const avgQueueLen = lastTime > 0 ? totalTimeWeighted / lastTime : 0;
+            
+            document.getElementById('avgWait').textContent = avgWait.toFixed(3);
+            document.getElementById('avgQueueLen').textContent = avgQueueLen.toFixed(3);
+            
+            addEvent(`<span class="event-action">📊 Expected Waiting Time: ${avgWait.toFixed(3)} menit</span>`);
+            addEvent(`<span class="event-action">📊 Time-Average Queue Length: ${avgQueueLen.toFixed(3)} pelanggan</span>`);
+        }
+        
+        function startSimulation() {
+            if (isRunning && !isPaused) return;
+            
+            isRunning = true;
+            isPaused = false;
+            
+            if (currentStep === 0) {
+                addEvent('<span class="event-action">🚀 SIMULASI DIMULAI</span>', true);
+                addEvent('<span class="event-action">⚙️ Discrete Event Simulation - Single Server Queue System</span>');
+                addEvent('<span class="event-action">📘 Distribusi: Eksponensial | Disiplin: FIFO</span>');
+            } else {
+                addEvent('<span class="event-action">▶️ Simulasi dilanjutkan...</span>', true);
+            }
+            
+            intervalId = setInterval(processNextStep, speed);
+        }
+        
+        function pauseSimulation() {
+            if (!isRunning || isPaused) return;
+            
+            isPaused = true;
+            clearInterval(intervalId);
+            addEvent('<span class="event-action">⏸️ Simulasi dijeda</span>', true);
+        }
+        
+        function stopSimulation() {
+            isRunning = false;
+            isPaused = false;
+            clearInterval(intervalId);
+        }
+        
+        function resetSimulation() {
+            stopSimulation();
+            currentStep = 0;
+            totalArrivals = 0;
+            servedCount = 0;
+            
+            document.getElementById('currentTime').textContent = '0.00';
+            document.getElementById('totalArrivals').textContent = '0';
+            document.getElementById('servedCount').textContent = '0';
+            document.getElementById('queueLength').textContent = '0';
+            document.getElementById('avgWait').textContent = '0.000';
+            document.getElementById('avgQueueLen').textContent = '0.000';
+            document.getElementById('atmScreen').textContent = 'ATM READY';
+            document.getElementById('atmStatus').textContent = 'IDLE';
+            document.getElementById('atmStatus').className = 'atm-status idle';
+            document.getElementById('queueLine').innerHTML = '<div style="color: #999; font-style: italic; padding: 20px;">Antrian kosong - Tekan "Mulai Simulasi"</div>';
+            document.getElementById('eventLog').innerHTML = '';
+            document.getElementById('timelineProgress').style.width = '0%';
+            document.getElementById('timelineProgress').textContent = '0.0%';
+            
+            addEvent('<span class="event-action">🔄 Simulasi direset - Siap untuk dijalankan kembali</span>', true);
+        }
+        
+        function updateSpeed() {
+            speed = parseInt(document.getElementById('speed').value);
+            if (isRunning && !isPaused) {
+                clearInterval(intervalId);
+                intervalId = setInterval(processNextStep, speed);
+            }
+        }
+        
+        // Initialize
+        addEvent('<span class="event-action">✨ Discrete Event Simulation siap untuk dijalankan</span>');
+        addEvent('<span class="event-action">📘 Tekan tombol "Mulai Simulasi" untuk memulai</span>');
+        addEvent(`<span class="event-action">👥 Total: ${TOTAL_CUSTOMERS} pelanggan | ⏱️ Durasi: ${SIMULATION_TIME} menit</span>`);
+    </script>
+</body>
+</html>
